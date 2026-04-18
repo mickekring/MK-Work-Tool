@@ -16,8 +16,10 @@ import type {
 // - Preceded by start-of-line or a non-word/non-hash character (avoids
 //   matching inside email addresses, URLs, or double-hash patterns).
 // - At least 2 characters to avoid single-letter noise.
+// - Must contain at least one letter — excludes hex colors like #000000
+//   and numeric IDs that happen to be preceded by `#`.
 // - Unicode letter/digit support so Swedish words with å/ä/ö work.
-const TAG_REGEX = /(?<=^|[^\w#])#([\p{L}\p{N}_-]{2,})/gu
+const TAG_REGEX = /(?<=^|[^\w#])#((?=[\p{L}\p{N}_-]*\p{L})[\p{L}\p{N}_-]{2,})/gu
 
 // Index state lives as a module-level singleton on the main process.
 interface IndexState {

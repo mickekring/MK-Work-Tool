@@ -386,6 +386,19 @@ export function registerIPCHandlers(): void {
     })
   })
 
+  ipcMain.handle(
+    'store:toggle-relation-expanded',
+    async (_, filePath: string, tag: string) => {
+      mainStore.getState().toggleRelationExpanded(filePath, tag)
+      const expandedRelations = mainStore.getState().ui.expandedRelations
+      BrowserWindow.getAllWindows().forEach((win) => {
+        win.webContents.send('store:state-changed', {
+          ui: { expandedRelations }
+        })
+      })
+    }
+  )
+
   ipcMain.handle('store:set-accent-color', async (_, color: string) => {
     mainStore.getState().setAccentColor(color)
     // Notify all windows of the accent color change

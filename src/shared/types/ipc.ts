@@ -140,6 +140,10 @@ export interface StoreChannels {
     args: [folderId: string]
     result: void
   }
+  'store:toggle-relation-expanded': {
+    args: [filePath: string, tag: string]
+    result: void
+  }
 }
 
 // All IPC channels combined

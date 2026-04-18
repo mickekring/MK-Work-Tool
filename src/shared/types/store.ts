@@ -42,6 +42,10 @@ export interface UIState {
   rightSidebarWidth: number
   lastOpenedFile: string | null
   expandedFolders: string[]
+  // Per-file map of expanded relation tag names in the right sidebar.
+  // Keyed by absolute file path; value is an array of tag display names
+  // currently expanded for that file.
+  expandedRelations: Record<string, string[]>
 }
 
 export interface EditorState {
@@ -73,6 +77,7 @@ export interface MainStore {
   setLeftSidebarWidth: (width: number) => void
   setRightSidebarWidth: (width: number) => void
   toggleFolderExpanded: (folderId: string) => void
+  toggleRelationExpanded: (filePath: string, tag: string) => void
   setFileTree: (tree: FileNode[]) => void
   openFile: (path: string, content: string) => void
   updateEditorContent: (content: string) => void
@@ -94,7 +99,8 @@ export const defaultUIState: UIState = {
   leftSidebarWidth: 280,
   rightSidebarWidth: 280,
   lastOpenedFile: null,
-  expandedFolders: []
+  expandedFolders: [],
+  expandedRelations: {}
 }
 
 export const defaultEditorState: EditorState = {

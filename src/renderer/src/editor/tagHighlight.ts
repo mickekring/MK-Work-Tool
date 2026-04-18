@@ -9,8 +9,9 @@ import {
 import { syntaxTree } from '@codemirror/language'
 
 // Matches #TagName where # is preceded by start-of-line or a non-word /
-// non-hash character, and the tag name is ≥2 letters/digits (unicode).
-const TAG_REGEX = /(?<=^|[^\w#])#([\p{L}\p{N}_-]{2,})/gu
+// non-hash character, and the tag name is ≥2 letters/digits (unicode),
+// and contains at least one letter (excludes #000000 hex colors etc.).
+const TAG_REGEX = /(?<=^|[^\w#])#((?=[\p{L}\p{N}_-]*\p{L})[\p{L}\p{N}_-]{2,})/gu
 
 const HEADING_NODES = new Set([
   'ATXHeading1',

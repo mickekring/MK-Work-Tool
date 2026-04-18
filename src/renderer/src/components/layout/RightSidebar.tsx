@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { FileRelations } from '@shared/types/tags'
 
 interface DocumentStats {
@@ -17,6 +16,8 @@ interface RightSidebarProps {
   lastModified?: Date | null
   relations?: FileRelations | null
   onOpenFile?: (path: string) => void
+  expandedRelations?: string[]
+  onToggleRelationExpanded?: (tag: string) => void
 }
 
 export function RightSidebar({
@@ -26,7 +27,9 @@ export function RightSidebar({
   fileName,
   lastModified,
   relations,
-  onOpenFile
+  onOpenFile,
+  expandedRelations,
+  onToggleRelationExpanded
 }: RightSidebarProps) {
   if (!isVisible) return null
 
@@ -50,7 +53,12 @@ export function RightSidebar({
       {/* Content area */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {/* Relations (tags + related files) */}
-        <RelationsSection relations={relations ?? null} onOpenFile={onOpenFile} />
+        <RelationsSection
+          relations={relations ?? null}
+          onOpenFile={onOpenFile}
+          expandedRelations={expandedRelations ?? []}
+          onToggleRelationExpanded={onToggleRelationExpanded}
+        />
 
         {stats ? (
           <div className="space-y-6 mt-6">
@@ -142,10 +150,14 @@ function StatRow({ label, value }: { label: string; value: string }) {
 
 function RelationsSection({
   relations,
-  onOpenFile
+  onOpenFile,
+  expandedRelations,
+  onToggleRelationExpanded
 }: {
   relations: FileRelations | null
   onOpenFile?: (path: string) => void
+  expandedRelations: string[]
+  onToggleRelationExpanded?: (tag: string) => void
 }) {
   if (!relations) return null
 
@@ -168,6 +180,8 @@ function RelationsSection({
               taggedIn={tagInfo.taggedIn}
               mentionedIn={tagInfo.mentionedIn}
               onOpenFile={onOpenFile}
+              expanded={expandedRelations.includes(tagInfo.tag)}
+              onToggle={onToggleRelationExpanded}
             />
           ))}
         </div>
@@ -180,21 +194,24 @@ function TagRelationGroup({
   tag,
   taggedIn,
   mentionedIn,
-  onOpenFile
+  onOpenFile,
+  expanded,
+  onToggle
 }: {
   tag: string
   taggedIn: string[]
   mentionedIn: string[]
   onOpenFile?: (path: string) => void
+  expanded: boolean
+  onToggle?: (tag: string) => void
 }) {
   const total = taggedIn.length + mentionedIn.length
-  const [expanded, setExpanded] = useState(total > 0 && total <= 10)
 
   return (
     <div className="border border-border-subtle rounded-md">
       <button
         className="w-full flex items-center justify-between px-2.5 py-1.5 hover:bg-sidebar-hover rounded-md transition-colors"
-        onClick={() => setExpanded((e) => !e)}
+        onClick={() => onToggle?.(tag)}
       >
         <span className="flex items-center gap-2 min-w-0">
           <svg

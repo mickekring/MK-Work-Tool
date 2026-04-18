@@ -88,6 +88,25 @@ function createMainStore(): StoreApi<MainStore> {
       settingsService.saveUIState(get().ui)
     },
 
+    // Relations expansion — per (file, tag)
+    toggleRelationExpanded: (filePath: string, tag: string) => {
+      const current = get().ui.expandedRelations ?? {}
+      const existing = current[filePath] ?? []
+      const nextForFile = existing.includes(tag)
+        ? existing.filter((t) => t !== tag)
+        : [...existing, tag]
+      const nextMap = { ...current }
+      if (nextForFile.length === 0) {
+        delete nextMap[filePath]
+      } else {
+        nextMap[filePath] = nextForFile
+      }
+      set((state) => ({
+        ui: { ...state.ui, expandedRelations: nextMap }
+      }))
+      settingsService.saveUIState(get().ui)
+    },
+
     // File tree actions
     setFileTree: (tree: FileNode[]) => {
       set({ fileTree: tree })

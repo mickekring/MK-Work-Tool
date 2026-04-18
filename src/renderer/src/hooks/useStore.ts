@@ -22,7 +22,8 @@ const defaultState: StoreState = {
     leftSidebarWidth: 280,
     rightSidebarWidth: 280,
     lastOpenedFile: null,
-    expandedFolders: []
+    expandedFolders: [],
+    expandedRelations: {}
   },
   fileTree: [],
   isLoading: true
@@ -113,6 +114,13 @@ export function useStoreActions() {
     return window.api.invoke('store:toggle-folder-expanded', folderId)
   }, [])
 
+  const toggleRelationExpanded = useCallback(
+    (filePath: string, tag: string) => {
+      return window.api.invoke('store:toggle-relation-expanded', filePath, tag)
+    },
+    []
+  )
+
   return {
     setTheme,
     setVaultPath,
@@ -121,7 +129,8 @@ export function useStoreActions() {
     setSidebarWidth,
     setFontSize,
     setAccentColor,
-    toggleFolderExpanded
+    toggleFolderExpanded,
+    toggleRelationExpanded
   }
 }
 
