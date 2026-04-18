@@ -154,8 +154,12 @@ export function AIChatSection({
         />
         {isStreaming ? (
           <button
-            className="self-end aspect-square rounded flex items-center justify-center transition-colors hover:bg-destructive/15 text-destructive"
-            style={{ height: '2.125rem' }}
+            className="self-end aspect-square rounded flex items-center justify-center transition-colors"
+            style={{
+              height: '2.125rem',
+              color: 'var(--color-primary)',
+              background: 'color-mix(in srgb, var(--color-primary) 14%, transparent)'
+            }}
             onClick={onAbort}
             title="Stop"
             aria-label="Stop streaming"
