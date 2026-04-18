@@ -17,9 +17,9 @@ const defaultState: StoreState = {
   },
   ui: {
     leftSidebarVisible: true,
-    rightSidebarVisible: false,
+    rightSidebarVisible: true,
     leftSidebarWidth: 280,
-    rightSidebarWidth: 300,
+    rightSidebarWidth: 280,
     lastOpenedFile: null,
     expandedFolders: []
   },

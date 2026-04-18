@@ -23,8 +23,12 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
   count, and estimated reading time in the right panel.
 - **Dark and light themes** — with a customizable accent color and
   five-step font size control.
-- **Folder state persistence** — which folders are expanded, sidebar
-  widths, and the last opened file are remembered across restarts.
+- **Collapsible, resizable sidebars** — both left (file tree) and right
+  (stats) panels can be dragged to resize or toggled from the status
+  bar. Widths, visibility, and every scroll-position detail persist.
+- **Session memory** — folder expansion, sidebar widths and visibility,
+  window size *and* on-screen position, last opened file, theme, accent
+  color, and font size are all remembered across restarts.
 - **Offline-first** — no telemetry, no network calls, no fonts loaded
   from the internet. Runs entirely on your machine.
 

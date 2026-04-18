@@ -61,6 +61,12 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Dedicated "Media files" section in the left sidebar (separated from regular notes)
 - [x] Fix stale-closure bug where first keystroke after save wasn't auto-saved (ref-based `handleSave`)
 - [x] Save eagerly on window blur / visibility hidden as extra data-loss insurance
+- [x] Right sidebar parity with left: same 200–400px resize range, nearly-black background, visible by default
+- [x] Sidebar toggle icons in the status bar (both left and right), state persists
+- [x] Window size + on-screen position persisted to `~/.arbetsyta/window-state.json`
+- [x] Increase editor + title horizontal padding so text has breathing room when sidebars are at max
+- [x] Fix sidebar widths reverting to default on Cmd+R reload (sync local state to store after IPC hydration)
+- [x] Full `npm audit` pass — Electron 41, React 19, TS 6; 0 vulnerabilities (was 24)
 
 ## Future Enhancements
 

@@ -48,11 +48,27 @@ export function AppLayout({
   documentStats = null
 }: AppLayoutProps) {
   const { settings, ui, fileTree, isLoading } = useStore()
-  const { setTheme, setSidebarWidth, toggleFolderExpanded } = useStoreActions()
+  const {
+    setTheme,
+    setSidebarWidth,
+    toggleFolderExpanded,
+    toggleLeftSidebar,
+    toggleRightSidebar
+  } = useStoreActions()
 
-  // Local state for immediate resize feedback
+  // Local state for immediate resize feedback. Keeps a local mirror so
+  // dragging feels instant, but re-syncs whenever the store reports a
+  // new value (notably after the initial IPC hydration on reload).
   const [leftWidth, setLeftWidth] = useState(ui.leftSidebarWidth)
   const [rightWidth, setRightWidth] = useState(ui.rightSidebarWidth)
+
+  useEffect(() => {
+    setLeftWidth(ui.leftSidebarWidth)
+  }, [ui.leftSidebarWidth])
+
+  useEffect(() => {
+    setRightWidth(ui.rightSidebarWidth)
+  }, [ui.rightSidebarWidth])
 
   // Handle resize with debounced persistence
   const handleLeftResize = useCallback(
@@ -189,6 +205,10 @@ export function AppLayout({
         cursorColumn={cursorColumn}
         theme={settings.theme}
         onThemeToggle={handleThemeToggle}
+        leftSidebarVisible={ui.leftSidebarVisible}
+        rightSidebarVisible={ui.rightSidebarVisible}
+        onToggleLeftSidebar={toggleLeftSidebar}
+        onToggleRightSidebar={toggleRightSidebar}
       />
     </div>
   )

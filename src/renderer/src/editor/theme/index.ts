@@ -51,7 +51,7 @@ export const editorTheme = EditorView.theme({
     fontFamily: 'inherit'
   },
   '.cm-line': {
-    padding: '0 1rem'
+    padding: '0 2.5rem'
   },
   '.cm-placeholder': {
     color: 'var(--color-muted-foreground)',

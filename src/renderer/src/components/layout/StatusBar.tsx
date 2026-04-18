@@ -6,6 +6,10 @@ interface StatusBarProps {
   cursorColumn: number
   theme: 'dark' | 'light'
   onThemeToggle: () => void
+  leftSidebarVisible: boolean
+  rightSidebarVisible: boolean
+  onToggleLeftSidebar: () => void
+  onToggleRightSidebar: () => void
 }
 
 export function StatusBar({
@@ -15,20 +19,30 @@ export function StatusBar({
   cursorLine,
   cursorColumn,
   theme,
-  onThemeToggle
+  onThemeToggle,
+  leftSidebarVisible,
+  rightSidebarVisible,
+  onToggleLeftSidebar,
+  onToggleRightSidebar
 }: StatusBarProps) {
   return (
-    <div className="h-6 bg-sidebar border-t border-border-subtle flex items-center justify-between px-3 text-xs">
-      {/* Left section - file path */}
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+    <div className="h-6 bg-sidebar border-t border-border-subtle flex items-center justify-between px-2 text-xs">
+      {/* Left section - sidebar toggle + file path */}
+      <div className="flex items-center gap-1 min-w-0 flex-1">
+        <button
+          className="btn-ghost flex items-center justify-center p-0.5"
+          onClick={onToggleLeftSidebar}
+          title={leftSidebarVisible ? 'Hide left sidebar' : 'Show left sidebar'}
+          aria-label={leftSidebarVisible ? 'Hide left sidebar' : 'Show left sidebar'}
+        >
+          <PanelLeftIcon active={leftSidebarVisible} />
+        </button>
         {filePath ? (
-          <>
-            <span className="text-muted-foreground truncate font-mono">
-              {formatPath(filePath)}
-            </span>
-          </>
+          <span className="text-muted-foreground truncate font-mono pl-1">
+            {formatPath(filePath)}
+          </span>
         ) : (
-          <span className="text-muted-foreground">No file open</span>
+          <span className="text-muted-foreground pl-1">No file open</span>
         )}
       </div>
 
@@ -52,8 +66,8 @@ export function StatusBar({
         ) : null}
       </div>
 
-      {/* Right section - cursor position and theme toggle */}
-      <div className="flex items-center gap-3">
+      {/* Right section - cursor position, theme toggle, right sidebar toggle */}
+      <div className="flex items-center gap-2">
         {filePath && (
           <span className="text-muted-foreground font-mono tabular-nums">
             Ln {cursorLine}, Col {cursorColumn}
@@ -101,8 +115,57 @@ export function StatusBar({
           )}
           <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
         </button>
+
+        <button
+          className="btn-ghost flex items-center justify-center p-0.5"
+          onClick={onToggleRightSidebar}
+          title={rightSidebarVisible ? 'Hide right sidebar' : 'Show right sidebar'}
+          aria-label={rightSidebarVisible ? 'Hide right sidebar' : 'Show right sidebar'}
+        >
+          <PanelRightIcon active={rightSidebarVisible} />
+        </button>
       </div>
     </div>
+  )
+}
+
+function PanelLeftIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ opacity: active ? 1 : 0.55 }}
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      {active && <rect x="3.5" y="3.5" width="5.5" height="17" rx="1.5" fill="currentColor" opacity="0.35" stroke="none" />}
+    </svg>
+  )
+}
+
+function PanelRightIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ opacity: active ? 1 : 0.55 }}
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="15" y1="3" x2="15" y2="21" />
+      {active && <rect x="15" y="3.5" width="5.5" height="17" rx="1.5" fill="currentColor" opacity="0.35" stroke="none" />}
+    </svg>
   )
 }
 

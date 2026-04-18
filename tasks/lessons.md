@@ -102,3 +102,24 @@ setTimeout(() => onSaveRef.current?.(), 1000)
 // Wrong — class won't match the scoped theme selector
 { tag: t.heading1, class: 'cm-header-1' }
 ```
+
+---
+
+## 6. `useState(propValue)` freezes the initializer — sync with useEffect
+
+**When**: Mirroring a prop (or store-derived value) into local state for
+fast, optimistic updates while still reflecting upstream changes.
+
+**Mistake**: `AppLayout` did `const [leftWidth, setLeftWidth] = useState(ui.leftSidebarWidth)` so drags felt instant. But the initializer only runs on first mount — which happens *before* the IPC hydration returns the real persisted width. After Cmd+R the sidebar reverted to whatever default was in `useStore`'s initial state (280), even though the persisted state was 400. Same risk for any "boot with default, hydrate from IPC" flow.
+
+**Rule**: When local state mirrors a prop or store value that may change after mount, pair `useState(initial)` with a `useEffect` that re-syncs on change. The useEffect runs after render, so the store's hydrated value always propagates down.
+
+**Pattern**:
+```typescript
+const [width, setWidth] = useState(ui.sidebarWidth)
+useEffect(() => {
+  setWidth(ui.sidebarWidth)
+}, [ui.sidebarWidth])
+```
+
+Don't just read `ui.sidebarWidth` directly in the render — that re-renders on every drag-triggered store update and kills the snappy local-drag feel.

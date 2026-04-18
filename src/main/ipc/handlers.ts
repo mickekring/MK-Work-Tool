@@ -288,10 +288,22 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle('store:toggle-left-sidebar', async () => {
     mainStore.getState().toggleLeftSidebar()
+    const visible = mainStore.getState().ui.leftSidebarVisible
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('store:state-changed', {
+        ui: { leftSidebarVisible: visible }
+      })
+    })
   })
 
   ipcMain.handle('store:toggle-right-sidebar', async () => {
     mainStore.getState().toggleRightSidebar()
+    const visible = mainStore.getState().ui.rightSidebarVisible
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('store:state-changed', {
+        ui: { rightSidebarVisible: visible }
+      })
+    })
   })
 
   ipcMain.handle('store:set-sidebar-width', async (_, side: 'left' | 'right', width: number) => {
@@ -300,6 +312,15 @@ export function registerIPCHandlers(): void {
     } else {
       mainStore.getState().setRightSidebarWidth(width)
     }
+    const ui = mainStore.getState().ui
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('store:state-changed', {
+        ui: {
+          leftSidebarWidth: ui.leftSidebarWidth,
+          rightSidebarWidth: ui.rightSidebarWidth
+        }
+      })
+    })
   })
 
   ipcMain.handle('store:set-font-size', async (_, size: FontSize) => {

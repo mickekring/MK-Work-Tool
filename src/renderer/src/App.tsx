@@ -315,7 +315,7 @@ created: ${new Date().toISOString()}
         {currentFile ? (
           <div className="h-full flex flex-col overflow-hidden">
             {/* Editable title */}
-            <div className="flex-shrink-0 max-w-4xl mx-auto w-full px-4">
+            <div className="flex-shrink-0 max-w-4xl mx-auto w-full px-10">
               <EditableTitle value={currentTitle ?? ''} onChange={handleTitleChange} />
             </div>
             {/* Editor */}

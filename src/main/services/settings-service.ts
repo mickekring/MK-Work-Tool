@@ -8,6 +8,19 @@ import { defaultSettings, defaultUIState } from '@shared/types/store'
 let configDir: string | null = null
 let settingsFile: string | null = null
 let uiStateFile: string | null = null
+let windowStateFile: string | null = null
+
+export interface WindowBounds {
+  width: number
+  height: number
+  x?: number
+  y?: number
+}
+
+const defaultWindowBounds: WindowBounds = {
+  width: 1400,
+  height: 900
+}
 
 function getConfigDir(): string {
   if (!configDir) {
@@ -28,6 +41,13 @@ function getUIStateFile(): string {
     uiStateFile = join(getConfigDir(), 'ui-state.json')
   }
   return uiStateFile
+}
+
+function getWindowStateFile(): string {
+  if (!windowStateFile) {
+    windowStateFile = join(getConfigDir(), 'window-state.json')
+  }
+  return windowStateFile
 }
 
 function ensureConfigDir(): void {
@@ -75,5 +95,14 @@ export const settingsService = {
 
   saveUIState(state: UIState): void {
     writeJSON(getUIStateFile(), state)
+  },
+
+  loadWindowBounds(): WindowBounds {
+    ensureConfigDir()
+    return readJSON(getWindowStateFile(), defaultWindowBounds)
+  },
+
+  saveWindowBounds(bounds: WindowBounds): void {
+    writeJSON(getWindowStateFile(), bounds)
   }
 }

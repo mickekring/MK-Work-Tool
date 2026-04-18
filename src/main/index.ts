@@ -3,6 +3,7 @@ import { join } from 'path'
 import { pathToFileURL } from 'url'
 import { registerIPCHandlers } from './ipc/handlers'
 import { mainStore } from './store'
+import { settingsService } from './services/settings-service'
 
 // Register custom scheme before app is ready so the renderer treats
 // vault-media:// URLs as secure/standard and can load images from them.
@@ -30,9 +31,13 @@ function createWindow(): void {
   // Check if we're in development mode (must be called after app is ready)
   const isDev = !app.isPackaged
 
+  const savedBounds = settingsService.loadWindowBounds()
+
   const mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: savedBounds.width,
+    height: savedBounds.height,
+    x: savedBounds.x,
+    y: savedBounds.y,
     minWidth: 900,
     minHeight: 600,
     show: false,
@@ -49,6 +54,26 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+  })
+
+  // Persist window bounds on resize/move (debounced) and on close.
+  // Debounce avoids hammering the disk while the user drags.
+  let saveTimer: ReturnType<typeof setTimeout> | undefined
+  const persistBounds = (): void => {
+    if (mainWindow.isDestroyed()) return
+    if (mainWindow.isMinimized() || mainWindow.isFullScreen()) return
+    const { width, height, x, y } = mainWindow.getBounds()
+    settingsService.saveWindowBounds({ width, height, x, y })
+  }
+  const schedulePersist = (): void => {
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(persistBounds, 400)
+  }
+  mainWindow.on('resize', schedulePersist)
+  mainWindow.on('move', schedulePersist)
+  mainWindow.on('close', () => {
+    if (saveTimer) clearTimeout(saveTimer)
+    persistBounds()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

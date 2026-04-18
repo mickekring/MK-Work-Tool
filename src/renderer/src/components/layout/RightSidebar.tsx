@@ -25,8 +25,8 @@ export function RightSidebar({
 
   return (
     <aside
-      className="flex flex-col bg-sidebar border-l border-border-subtle overflow-hidden"
-      style={{ width }}
+      className="flex flex-col border-l border-border-subtle overflow-hidden"
+      style={{ width, background: 'var(--color-sidebar-alt)' }}
     >
       {/* Header spacer for title bar alignment */}
       <div className="pt-[52px] px-4 pb-3 titlebar-drag-region">
