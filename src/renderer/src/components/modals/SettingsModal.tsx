@@ -25,7 +25,7 @@ const ACCENT_COLORS = [
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { settings } = useStore()
-  const { setTheme, setFontSize, setAccentColor, setVaultPath } = useStoreActions()
+  const { setTheme, setFontSize, setAccentColor } = useStoreActions()
   const { selectVault, openVault, initVault } = useFileOperations()
   const [activeSection, setActiveSection] = useState<SettingsSection>('general')
 

@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { AppLayout } from '@/components/layout'
 import { MarkdownEditor, type MarkdownEditorHandle } from '@/components/editor/MarkdownEditor'
 import { WelcomeModal } from '@/components/modals/WelcomeModal'
 import { EditableTitle } from '@/components/editor/EditableTitle'
 import { useStore, useFileOperations } from '@/hooks/useStore'
 
-function App(): JSX.Element {
+function App(): React.JSX.Element {
   const { settings, isLoading } = useStore()
   const {
     readFile,

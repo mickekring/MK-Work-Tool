@@ -47,7 +47,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
   useEffect(() => {
     onSaveRef.current = onSave
   }, [onSave])
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Debounced auto-save. Reads the latest onSave from the ref so the
   // closure here can never go stale.
@@ -134,13 +134,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
 
   // Auto-focus on mount
   useEffect(() => {
-    if (autoFocus && view) {
-      // Small delay to ensure the view is ready
-      const timer = setTimeout(() => {
-        focus()
-      }, 100)
-      return () => clearTimeout(timer)
-    }
+    if (!autoFocus || !view) return
+    const timer = setTimeout(() => {
+      focus()
+    }, 100)
+    return () => clearTimeout(timer)
   }, [autoFocus, view, focus])
 
   // Cleanup timeout on unmount

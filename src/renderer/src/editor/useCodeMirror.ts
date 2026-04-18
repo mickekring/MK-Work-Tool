@@ -21,7 +21,7 @@ export interface UseCodeMirrorOptions {
 }
 
 export interface UseCodeMirrorReturn {
-  containerRef: React.RefObject<HTMLDivElement>
+  containerRef: React.RefObject<HTMLDivElement | null>
   view: EditorView | null
   getValue: () => string
   setValue: (value: string) => void

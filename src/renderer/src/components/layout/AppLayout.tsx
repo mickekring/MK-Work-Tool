@@ -182,7 +182,7 @@ export function AppLayout({
 
       {/* Status bar */}
       <StatusBar
-        filePath={selectedFile}
+        filePath={selectedFile ?? null}
         isDirty={isDirty}
         isSaving={isSaving}
         cursorLine={cursorLine}

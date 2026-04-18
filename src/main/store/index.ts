@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { MainStore, FileNode, FontSize } from '@shared/types/store'
-import { defaultSettings, defaultUIState, defaultEditorState } from '@shared/types/store'
+import { defaultEditorState } from '@shared/types/store'
 import { settingsService } from '../services/settings-service'
 
 // Lazy store initialization

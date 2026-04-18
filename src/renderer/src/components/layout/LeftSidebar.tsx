@@ -479,7 +479,6 @@ function FileTreeItem({
   expandedFolders,
   onToggleFolderExpanded
 }: FileTreeItemProps) {
-  const isFile = node.type === 'file'
   const isFolder = node.type === 'folder'
   const isExpanded = expandedFolders?.includes(node.id) ?? false
   const isActive = selectedFile === node.path

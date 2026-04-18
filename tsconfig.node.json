@@ -9,8 +9,7 @@
     "types": ["electron-vite/node"],
     "paths": {
       "@shared/*": ["./src/shared/*"]
-    },
-    "baseUrl": "."
+    }
   },
   "include": [
     "electron.vite.config.ts",

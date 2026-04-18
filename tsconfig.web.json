@@ -7,7 +7,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/renderer/src/*"],
       "@shared/*": ["./src/shared/*"]
