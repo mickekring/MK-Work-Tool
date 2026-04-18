@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { ChatMessage } from '@/hooks/useChat'
 
 export interface AIChatSectionProps {
@@ -115,7 +117,7 @@ export function AIChatSection({
       </div>
 
       {modelError && (
-        <p className="text-[11px] text-destructive bg-destructive/10 px-2 py-1.5 rounded">
+        <p className="text-xs text-destructive bg-destructive/10 px-2 py-1.5 rounded">
           {modelError}
         </p>
       )}
@@ -123,10 +125,10 @@ export function AIChatSection({
       {/* Messages */}
       <div
         ref={listRef}
-        className="max-h-[360px] min-h-[80px] overflow-y-auto rounded bg-muted/30 p-2 text-xs space-y-2"
+        className="max-h-[420px] min-h-[80px] overflow-y-auto rounded bg-muted/30 p-2 text-sm space-y-2"
       >
         {messages.length === 0 ? (
-          <p className="text-muted-foreground text-[11px] py-2 text-center">
+          <p className="text-muted-foreground text-xs py-2 text-center">
             {showSetupHint
               ? emptyState ??
                 'Pick a model above to chat with this document.'
@@ -147,7 +149,7 @@ export function AIChatSection({
           onKeyDown={handleKeyDown}
           placeholder={canSend ? 'Ask about this note…' : 'Open a file first'}
           disabled={!canSend}
-          className="flex-1 resize-none text-xs bg-muted text-foreground px-2 py-1.5 rounded border border-border-subtle focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+          className="flex-1 resize-none text-sm bg-muted text-foreground px-2 py-1.5 rounded border border-border-subtle focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           style={{ maxHeight: 160 }}
         />
         {isStreaming ? (
@@ -197,7 +199,7 @@ export function AIChatSection({
 
       {messages.length > 0 && (
         <button
-          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           onClick={onClear}
         >
           Clear conversation
@@ -217,17 +219,19 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           : 'bg-transparent text-foreground/95'
       }`}
     >
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
         {isUser ? 'You' : 'Assistant'}
       </div>
-      <div className="whitespace-pre-wrap break-words leading-snug">
-        {message.content}
+      <div className="chat-markdown break-words leading-snug">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {message.content}
+        </ReactMarkdown>
         {message.streaming && (
           <span className="inline-block w-1.5 h-3 ml-0.5 align-baseline bg-foreground/60 animate-pulse-subtle" />
         )}
       </div>
       {message.error && (
-        <div className="text-destructive mt-1 text-[11px]">
+        <div className="text-destructive mt-1 text-xs">
           {message.error}
         </div>
       )}

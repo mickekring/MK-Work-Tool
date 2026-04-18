@@ -76,6 +76,8 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Per-file manual history snapshots (max 10, pruned on overflow) with Save / Restore / Delete UI in a new right-sidebar History section; snapshots stored at `{vault}/.arbetsyta/history/{path}/{id}.md`
 - [x] Fix LeftSidebar hook-order crash when collapsing (rules of hooks violation — guard between hooks)
 - [x] Local AI chat via Ollama — new AI Chat section in the right sidebar streams responses from a local Ollama model; system prompt injects the current document via `{{document}}`; model + prompt editable in Settings → AI; cancel / clear / error-handled
+- [x] Markdown rendering in chat bubbles via react-markdown + remark-gfm (bold, italic, lists, code, tables, etc.)
+- [x] Right sidebar font-size audit — replaced pixel literals (`text-[10px]`, `text-[11px]`) with rem-based Tailwind classes so the Settings → Appearance font-size scales the whole sidebar consistently. Primary content (chat messages, file lists, snapshot rows, "Save snapshot" button) bumped from `text-xs` to `text-sm` for readability.
 
 ## Future Enhancements
 

@@ -205,7 +205,7 @@ function DocumentInfoBody({
     <div className="space-y-5">
       {fileName && (
         <div>
-          <h3 className="text-[11px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">
+          <h3 className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wider">
             File
           </h3>
           <p className="text-sm text-foreground truncate font-mono">
@@ -220,7 +220,7 @@ function DocumentInfoBody({
       )}
 
       <div>
-        <h3 className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+        <h3 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
           Statistics
         </h3>
         <div className="space-y-1.5">
@@ -232,7 +232,7 @@ function DocumentInfoBody({
       </div>
 
       <div>
-        <h3 className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+        <h3 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
           Reading Time
         </h3>
         <div className="flex items-baseline gap-2">
@@ -394,14 +394,14 @@ function RelationList({
 }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 px-1 py-1">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground/70 px-1 py-1">
         {label}
       </div>
       <ul className="space-y-0.5">
         {files.map((path) => (
           <li key={path}>
             <button
-              className="w-full text-left text-xs text-foreground/90 hover:text-foreground hover:bg-sidebar-hover rounded px-1.5 py-1 truncate transition-colors"
+              className="w-full text-left text-sm text-foreground/90 hover:text-foreground hover:bg-sidebar-hover rounded px-1.5 py-1 truncate transition-colors"
               onClick={() => onOpenFile?.(path)}
               title={path}
             >
@@ -461,7 +461,7 @@ function HistoryBody({
   return (
     <div className="space-y-2">
       <button
-        className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="w-full flex items-center justify-center gap-1.5 py-1.5 text-sm font-medium rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         style={{
           background: canSnapshot
             ? 'color-mix(in srgb, var(--color-primary) 18%, transparent)'
@@ -523,10 +523,10 @@ function SnapshotRow({
   return (
     <li className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-sidebar-hover transition-colors group">
       <div className="flex-1 min-w-0">
-        <div className="text-xs text-foreground/90 truncate font-mono">
+        <div className="text-sm text-foreground/90 truncate font-mono">
           {formatSnapshotDate(date)}
         </div>
-        <div className="text-[10px] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {formatRelativeTime(date)} · {formatBytes(snapshot.size)}
         </div>
       </div>

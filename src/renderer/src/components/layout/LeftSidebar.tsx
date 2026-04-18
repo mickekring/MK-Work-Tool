@@ -276,7 +276,7 @@ export function LeftSidebar({
               ) && (
                 <>
                   <div className="h-px bg-border-subtle mx-3 my-2" />
-                  <div className="px-4 pt-1 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+                  <div className="px-4 pt-1 pb-1 text-xs uppercase tracking-wider text-muted-foreground/70 font-medium">
                     Media files
                   </div>
                   <FileTreeNodes

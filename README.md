@@ -36,7 +36,8 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
   injected into the system prompt automatically, so you can ask
   questions grounded in whatever you're reading/writing. Pick any
   installed Ollama model, edit the system prompt in Settings → AI,
-  and stream responses token-by-token. All local, no network.
+  and stream responses token-by-token with full markdown rendering
+  (bold, italic, lists, code, tables, etc.). All local, no network.
 - **Always-safe auto-save** — debounced auto-save after you stop typing,
   plus eager save on window blur and before quit. Cmd/Ctrl+S also works.
 - **Document stats** — live word count, character count, paragraph

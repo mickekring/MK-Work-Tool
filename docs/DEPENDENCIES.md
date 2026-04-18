@@ -28,6 +28,8 @@
 | @lezer/highlight | ^1.2.0 | 1.2.3 | Syntax highlighting tags |
 | @lezer/markdown | ^1.6.3 | 1.6.3 | Markdown parser |
 | clsx | ^2.1.0 | 2.1.1 | Conditional classnames |
+| react-markdown | ^10.1.0 | 10.1.0 | Markdown rendering in AI chat bubbles |
+| remark-gfm | ^4.0.1 | 4.0.1 | GFM extensions (tables, strikethrough) for react-markdown |
 
 ## Dev Dependencies
 
