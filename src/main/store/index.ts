@@ -88,6 +88,16 @@ function createMainStore(): StoreApi<MainStore> {
       settingsService.saveUIState(get().ui)
     },
 
+    // Global section expand state (right sidebar top-level sections)
+    setSectionExpanded: (sectionId: string, expanded: boolean) => {
+      const current = get().ui.sectionsExpanded ?? {}
+      const next = { ...current, [sectionId]: expanded }
+      set((state) => ({
+        ui: { ...state.ui, sectionsExpanded: next }
+      }))
+      settingsService.saveUIState(get().ui)
+    },
+
     // Relations expansion — per (file, tag)
     toggleRelationExpanded: (filePath: string, tag: string) => {
       const current = get().ui.expandedRelations ?? {}

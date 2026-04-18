@@ -23,7 +23,8 @@ const defaultState: StoreState = {
     rightSidebarWidth: 280,
     lastOpenedFile: null,
     expandedFolders: [],
-    expandedRelations: {}
+    expandedRelations: {},
+    sectionsExpanded: {}
   },
   fileTree: [],
   isLoading: true
@@ -121,6 +122,13 @@ export function useStoreActions() {
     []
   )
 
+  const setSectionExpanded = useCallback(
+    (sectionId: string, expanded: boolean) => {
+      return window.api.invoke('store:set-section-expanded', sectionId, expanded)
+    },
+    []
+  )
+
   return {
     setTheme,
     setVaultPath,
@@ -130,7 +138,8 @@ export function useStoreActions() {
     setFontSize,
     setAccentColor,
     toggleFolderExpanded,
-    toggleRelationExpanded
+    toggleRelationExpanded,
+    setSectionExpanded
   }
 }
 

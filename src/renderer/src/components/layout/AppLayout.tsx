@@ -54,7 +54,8 @@ export function AppLayout({
     toggleFolderExpanded,
     toggleLeftSidebar,
     toggleRightSidebar,
-    toggleRelationExpanded
+    toggleRelationExpanded,
+    setSectionExpanded
   } = useStoreActions()
 
   const relations = useFileRelations(selectedFile ?? null)
@@ -204,6 +205,8 @@ export function AppLayout({
           onToggleRelationExpanded={(tag) => {
             if (selectedFile) toggleRelationExpanded(selectedFile, tag)
           }}
+          sectionsExpanded={ui.sectionsExpanded}
+          onSetSectionExpanded={setSectionExpanded}
         />
       </div>
 

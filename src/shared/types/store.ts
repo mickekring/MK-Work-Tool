@@ -46,6 +46,10 @@ export interface UIState {
   // Keyed by absolute file path; value is an array of tag display names
   // currently expanded for that file.
   expandedRelations: Record<string, string[]>
+  // Global (not per-file) expand state of top-level right-sidebar
+  // sections, keyed by section id. Absence of a key means the section
+  // uses its own default.
+  sectionsExpanded: Record<string, boolean>
 }
 
 export interface EditorState {
@@ -78,6 +82,7 @@ export interface MainStore {
   setRightSidebarWidth: (width: number) => void
   toggleFolderExpanded: (folderId: string) => void
   toggleRelationExpanded: (filePath: string, tag: string) => void
+  setSectionExpanded: (sectionId: string, expanded: boolean) => void
   setFileTree: (tree: FileNode[]) => void
   openFile: (path: string, content: string) => void
   updateEditorContent: (content: string) => void
@@ -100,7 +105,8 @@ export const defaultUIState: UIState = {
   rightSidebarWidth: 280,
   lastOpenedFile: null,
   expandedFolders: [],
-  expandedRelations: {}
+  expandedRelations: {},
+  sectionsExpanded: {}
 }
 
 export const defaultEditorState: EditorState = {

@@ -144,6 +144,10 @@ export interface StoreChannels {
     args: [filePath: string, tag: string]
     result: void
   }
+  'store:set-section-expanded': {
+    args: [sectionId: string, expanded: boolean]
+    result: void
+  }
 }
 
 // All IPC channels combined

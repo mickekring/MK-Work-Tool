@@ -399,6 +399,19 @@ export function registerIPCHandlers(): void {
     }
   )
 
+  ipcMain.handle(
+    'store:set-section-expanded',
+    async (_, sectionId: string, expanded: boolean) => {
+      mainStore.getState().setSectionExpanded(sectionId, expanded)
+      const sectionsExpanded = mainStore.getState().ui.sectionsExpanded
+      BrowserWindow.getAllWindows().forEach((win) => {
+        win.webContents.send('store:state-changed', {
+          ui: { sectionsExpanded }
+        })
+      })
+    }
+  )
+
   ipcMain.handle('store:set-accent-color', async (_, color: string) => {
     mainStore.getState().setAccentColor(color)
     // Notify all windows of the accent color change
