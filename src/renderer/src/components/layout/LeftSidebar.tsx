@@ -3,7 +3,6 @@ import type { FileNode } from '@shared/types/store'
 import { InputModal } from '../modals/InputModal'
 import { ConfirmModal } from '../modals/ConfirmModal'
 import { ContextMenu, type ContextMenuItem } from '../ui/ContextMenu'
-import { SettingsModal } from '../modals/SettingsModal'
 
 interface LeftSidebarProps {
   width: number
@@ -22,6 +21,7 @@ interface LeftSidebarProps {
   selectedFile?: string | null
   expandedFolders?: string[]
   onToggleFolderExpanded?: (folderId: string) => void
+  onOpenSettings?: () => void
 }
 
 interface ContextMenuState {
@@ -46,11 +46,11 @@ export function LeftSidebar({
   onRefresh,
   selectedFile,
   expandedFolders,
-  onToggleFolderExpanded
+  onToggleFolderExpanded,
+  onOpenSettings
 }: LeftSidebarProps) {
   const [showFolderModal, setShowFolderModal] = useState(false)
   const [folderModalTarget, setFolderModalTarget] = useState<string | null>(null)
-  const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [renameModal, setRenameModal] = useState<{ node: FileNode; isOpen: boolean } | null>(null)
   const [deleteModal, setDeleteModal] = useState<{ node: FileNode; isOpen: boolean } | null>(null)
@@ -222,7 +222,7 @@ export function LeftSidebar({
             )}
             <button
               className="p-1 rounded hover:bg-sidebar-hover text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setShowSettingsModal(true)}
+              onClick={onOpenSettings}
               title="Settings"
             >
               <svg
@@ -391,11 +391,6 @@ export function LeftSidebar({
         onCancel={() => setDeleteModal(null)}
       />
 
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-      />
     </>
   )
 }

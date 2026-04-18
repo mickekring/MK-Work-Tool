@@ -377,6 +377,7 @@ created: ${new Date().toISOString()}
         onSnapshotCurrent={handleSnapshot}
         onRestoreSnapshot={handleRequestRestore}
         onDeleteSnapshot={handleDeleteSnapshot}
+        documentContent={content}
       >
         {/* Main editor area content */}
         {currentFile ? (

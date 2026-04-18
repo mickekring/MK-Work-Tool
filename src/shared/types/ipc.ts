@@ -1,6 +1,13 @@
 import type { AppSettings, UIState, FileNode } from './store'
 import type { FileRelations, TagIndexSnapshot } from './tags'
 import type { FileHistory, SnapshotMeta } from './history'
+import type {
+  OllamaModel,
+  ChatMessageSend,
+  ChatChunk,
+  ChatDone,
+  ChatError
+} from './ai'
 
 // IPC Channel definitions for type-safe communication
 
@@ -55,6 +62,26 @@ export interface AttachmentChannels {
   }
   'shell:open-external': {
     args: [url: string]
+    result: void
+  }
+}
+
+// AI / Ollama channels
+export interface AIChannels {
+  'ai:list-models': {
+    args: []
+    result: { ok: true; models: OllamaModel[] } | { ok: false; error: string }
+  }
+  'ai:chat-start': {
+    args: [
+      requestId: string,
+      model: string,
+      messages: ChatMessageSend[]
+    ]
+    result: void
+  }
+  'ai:chat-abort': {
+    args: [requestId: string]
     result: void
   }
 }
@@ -169,6 +196,14 @@ export interface StoreChannels {
     args: [sectionId: string, expanded: boolean]
     result: void
   }
+  'store:set-ai-model': {
+    args: [model: string | null]
+    result: void
+  }
+  'store:set-ai-system-prompt': {
+    args: [prompt: string]
+    result: void
+  }
 }
 
 // All IPC channels combined
@@ -179,7 +214,8 @@ export type IPCChannels = DialogChannels &
   VaultChannels &
   StoreChannels &
   TagChannels &
-  HistoryChannels
+  HistoryChannels &
+  AIChannels
 
 // Helper type to extract channel names
 export type IPCChannelName = keyof IPCChannels
@@ -203,6 +239,9 @@ export interface MainToRendererEvents {
   }
   'tags:index-changed': TagIndexSnapshot
   'history:changed': { filePath: string }
+  'ai:chat-chunk': ChatChunk
+  'ai:chat-done': ChatDone
+  'ai:chat-error': ChatError
 }
 
 export type MainToRendererEventName = keyof MainToRendererEvents

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { FileRelations } from '@shared/types/tags'
 import type { FileHistory, SnapshotMeta } from '@shared/types/history'
+import { AIChatSection, type AIChatSectionProps } from './AIChatSection'
 
 // IDs used to persist section expand state globally (across files and
 // across restarts). Keep string literals stable — renaming would lose
@@ -8,6 +9,7 @@ import type { FileHistory, SnapshotMeta } from '@shared/types/history'
 export const SECTION_DOCUMENT_INFO = 'document-info'
 export const SECTION_RELATIONS = 'relations'
 export const SECTION_HISTORY = 'history'
+export const SECTION_AI_CHAT = 'ai-chat'
 
 interface DocumentStats {
   wordCount: number
@@ -34,6 +36,7 @@ interface RightSidebarProps {
   onCreateSnapshot?: () => void
   onRestoreSnapshot?: (snapshotId: string) => void
   onDeleteSnapshot?: (snapshotId: string) => void
+  chat?: AIChatSectionProps
 }
 
 export function RightSidebar({
@@ -52,7 +55,8 @@ export function RightSidebar({
   canSnapshot,
   onCreateSnapshot,
   onRestoreSnapshot,
-  onDeleteSnapshot
+  onDeleteSnapshot,
+  chat
 }: RightSidebarProps) {
   if (!isVisible) return null
 
@@ -62,6 +66,8 @@ export function RightSidebar({
     sectionsExpanded?.[SECTION_RELATIONS] ?? true // default expanded
   const historyExpanded =
     sectionsExpanded?.[SECTION_HISTORY] ?? false // default collapsed
+  const aiChatExpanded =
+    sectionsExpanded?.[SECTION_AI_CHAT] ?? false // default collapsed
 
   return (
     <aside
@@ -116,6 +122,17 @@ export function RightSidebar({
             onDeleteSnapshot={onDeleteSnapshot}
           />
         </CollapsibleSection>
+
+        {chat && (
+          <CollapsibleSection
+            id={SECTION_AI_CHAT}
+            title="AI Chat"
+            expanded={aiChatExpanded}
+            onToggle={onSetSectionExpanded}
+          >
+            <AIChatSection {...chat} />
+          </CollapsibleSection>
+        )}
       </div>
     </aside>
   )

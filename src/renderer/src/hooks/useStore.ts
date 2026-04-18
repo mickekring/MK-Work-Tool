@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { AppSettings, UIState, FileNode, FontSize } from '@shared/types/store'
+import { defaultAISettings } from '@shared/types/store'
 import type { FileRelations, TagIndexSnapshot } from '@shared/types/tags'
 import type { FileHistory, SnapshotMeta } from '@shared/types/history'
 
@@ -15,7 +16,8 @@ const defaultState: StoreState = {
     vaultPath: null,
     theme: 'dark',
     fontSize: 'md',
-    accentColor: '#7c8cff'
+    accentColor: '#7c8cff',
+    ai: defaultAISettings
   },
   ui: {
     leftSidebarVisible: true,
@@ -130,6 +132,14 @@ export function useStoreActions() {
     []
   )
 
+  const setAIModel = useCallback((model: string | null) => {
+    return window.api.invoke('store:set-ai-model', model)
+  }, [])
+
+  const setAISystemPrompt = useCallback((prompt: string) => {
+    return window.api.invoke('store:set-ai-system-prompt', prompt)
+  }, [])
+
   return {
     setTheme,
     setVaultPath,
@@ -140,7 +150,9 @@ export function useStoreActions() {
     setAccentColor,
     toggleFolderExpanded,
     toggleRelationExpanded,
-    setSectionExpanded
+    setSectionExpanded,
+    setAIModel,
+    setAISystemPrompt
   }
 }
 

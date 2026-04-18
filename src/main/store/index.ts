@@ -47,6 +47,26 @@ function createMainStore(): StoreApi<MainStore> {
       settingsService.saveSettings(get().settings)
     },
 
+    setAIModel: (model: string | null) => {
+      set((state) => ({
+        settings: {
+          ...state.settings,
+          ai: { ...state.settings.ai, model }
+        }
+      }))
+      settingsService.saveSettings(get().settings)
+    },
+
+    setAISystemPrompt: (prompt: string) => {
+      set((state) => ({
+        settings: {
+          ...state.settings,
+          ai: { ...state.settings.ai, systemPrompt: prompt }
+        }
+      }))
+      settingsService.saveSettings(get().settings)
+    },
+
     // UI actions
     toggleLeftSidebar: () => {
       set((state) => ({

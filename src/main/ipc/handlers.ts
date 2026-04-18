@@ -5,6 +5,8 @@ import type { FileNode, FontSize } from '@shared/types/store'
 import { mainStore } from '../store'
 import { tagsService } from '../services/tags-service'
 import { historyService } from '../services/history-service'
+import { listModels, streamChat } from '../services/ollama-service'
+import type { ChatMessageSend } from '@shared/types/ai'
 
 export const MEDIA_FOLDER_NAME = 'vault_media'
 
@@ -463,6 +465,74 @@ export function registerIPCHandlers(): void {
         settings: { accentColor: color }
       })
     })
+  })
+
+  ipcMain.handle('store:set-ai-model', async (_, model: string | null) => {
+    mainStore.getState().setAIModel(model)
+    const ai = mainStore.getState().settings.ai
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('store:state-changed', {
+        settings: { ai }
+      })
+    })
+  })
+
+  ipcMain.handle('store:set-ai-system-prompt', async (_, prompt: string) => {
+    mainStore.getState().setAISystemPrompt(prompt)
+    const ai = mainStore.getState().settings.ai
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('store:state-changed', {
+        settings: { ai }
+      })
+    })
+  })
+
+  // --- AI (Ollama) ------------------------------------------------------
+
+  ipcMain.handle('ai:list-models', async () => {
+    return listModels()
+  })
+
+  // Track in-flight chat streams so users can cancel.
+  const activeChats = new Map<string, AbortController>()
+
+  ipcMain.handle(
+    'ai:chat-start',
+    async (
+      event,
+      requestId: string,
+      model: string,
+      messages: ChatMessageSend[]
+    ) => {
+      const controller = new AbortController()
+      activeChats.set(requestId, controller)
+      const senderWin = BrowserWindow.fromWebContents(event.sender)
+      // Fire-and-forget — streamChat emits chunks via events.
+      streamChat(
+        model,
+        messages,
+        controller.signal,
+        (delta) => {
+          senderWin?.webContents.send('ai:chat-chunk', { requestId, delta })
+        },
+        () => {
+          senderWin?.webContents.send('ai:chat-done', { requestId })
+          activeChats.delete(requestId)
+        },
+        (message) => {
+          senderWin?.webContents.send('ai:chat-error', { requestId, message })
+          activeChats.delete(requestId)
+        }
+      )
+    }
+  )
+
+  ipcMain.handle('ai:chat-abort', async (_, requestId: string) => {
+    const ctrl = activeChats.get(requestId)
+    if (ctrl) {
+      ctrl.abort()
+      activeChats.delete(requestId)
+    }
   })
 }
 

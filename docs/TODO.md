@@ -75,6 +75,7 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Tag regex excludes pure-digit tokens — hex colors like `#000000` no longer register as tags
 - [x] Per-file manual history snapshots (max 10, pruned on overflow) with Save / Restore / Delete UI in a new right-sidebar History section; snapshots stored at `{vault}/.arbetsyta/history/{path}/{id}.md`
 - [x] Fix LeftSidebar hook-order crash when collapsing (rules of hooks violation — guard between hooks)
+- [x] Local AI chat via Ollama — new AI Chat section in the right sidebar streams responses from a local Ollama model; system prompt injects the current document via `{{document}}`; model + prompt editable in Settings → AI; cancel / clear / error-handled
 
 ## Future Enhancements
 

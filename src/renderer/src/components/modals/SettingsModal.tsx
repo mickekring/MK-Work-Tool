@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useStore, useStoreActions, useFileOperations } from '@/hooks/useStore'
-import { fontSizeLabels, type FontSize } from '@shared/types/store'
+import { useOllamaModels } from '@/hooks/useChat'
+import {
+  fontSizeLabels,
+  type FontSize,
+  DEFAULT_AI_SYSTEM_PROMPT
+} from '@shared/types/store'
 
-type SettingsSection = 'general' | 'appearance'
+type SettingsSection = 'general' | 'appearance' | 'ai'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -25,7 +30,13 @@ const ACCENT_COLORS = [
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { settings } = useStore()
-  const { setTheme, setFontSize, setAccentColor } = useStoreActions()
+  const {
+    setTheme,
+    setFontSize,
+    setAccentColor,
+    setAIModel,
+    setAISystemPrompt
+  } = useStoreActions()
   const { selectVault, openVault, initVault } = useFileOperations()
   const [activeSection, setActiveSection] = useState<SettingsSection>('general')
 
@@ -56,7 +67,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   const menuItems: { id: SettingsSection; label: string }[] = [
     { id: 'general', label: 'General' },
-    { id: 'appearance', label: 'Appearance' }
+    { id: 'appearance', label: 'Appearance' },
+    { id: 'ai', label: 'AI' }
   ]
 
   return (
@@ -95,7 +107,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
             <h1 className="text-lg font-semibold text-foreground">
-              {activeSection === 'general' ? 'General' : 'Appearance'}
+              {activeSection === 'general'
+                ? 'General'
+                : activeSection === 'appearance'
+                  ? 'Appearance'
+                  : 'AI'}
             </h1>
             <button
               className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -124,6 +140,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 onThemeChange={setTheme}
                 onAccentColorChange={setAccentColor}
                 onFontSizeChange={setFontSize}
+              />
+            )}
+            {activeSection === 'ai' && (
+              <AISettingsPanel
+                model={settings.ai.model}
+                systemPrompt={settings.ai.systemPrompt}
+                onModelChange={setAIModel}
+                onSystemPromptChange={setAISystemPrompt}
               />
             )}
           </div>
@@ -256,6 +280,115 @@ function AppearanceSettings({
         </div>
         <p className="text-xs text-muted-foreground mt-2">
           Applies to all text in the app and documents
+        </p>
+      </section>
+    </div>
+  )
+}
+
+interface AISettingsPanelProps {
+  model: string | null
+  systemPrompt: string
+  onModelChange: (model: string | null) => void
+  onSystemPromptChange: (prompt: string) => void
+}
+
+function AISettingsPanel({
+  model,
+  systemPrompt,
+  onModelChange,
+  onSystemPromptChange
+}: AISettingsPanelProps) {
+  const { models, error, loading, refetch } = useOllamaModels()
+  const [draftPrompt, setDraftPrompt] = useState(systemPrompt)
+
+  // Sync local draft if settings changed externally (e.g. from another window)
+  useEffect(() => {
+    setDraftPrompt(systemPrompt)
+  }, [systemPrompt])
+
+  const modelNames = models.map((m) => m.name)
+
+  return (
+    <div className="space-y-6">
+      {/* Ollama connection + model picker */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-foreground">Model</h3>
+          <button
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            onClick={refetch}
+            disabled={loading}
+          >
+            {loading ? 'Checking…' : 'Refresh'}
+          </button>
+        </div>
+
+        {error ? (
+          <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-2 mb-3">
+            {error}
+            <p className="mt-1 text-muted-foreground">
+              Install Ollama from{' '}
+              <span className="font-mono">ollama.com</span> and run{' '}
+              <span className="font-mono">ollama serve</span>, then click
+              Refresh.
+            </p>
+          </div>
+        ) : modelNames.length === 0 && !loading ? (
+          <p className="text-xs text-muted-foreground mb-3">
+            No models installed yet. Try{' '}
+            <span className="font-mono">ollama pull llama3.2</span>.
+          </p>
+        ) : null}
+
+        <select
+          className="w-full text-sm bg-muted text-foreground px-3 py-2 rounded border border-border-subtle focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+          value={model ?? ''}
+          onChange={(e) => onModelChange(e.target.value || null)}
+          disabled={modelNames.length === 0}
+        >
+          <option value="">Select a model…</option>
+          {modelNames.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground mt-2">
+          Used by the AI Chat panel in the right sidebar.
+        </p>
+      </section>
+
+      {/* System prompt */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-foreground">
+            System prompt
+          </h3>
+          <button
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => {
+              setDraftPrompt(DEFAULT_AI_SYSTEM_PROMPT)
+              onSystemPromptChange(DEFAULT_AI_SYSTEM_PROMPT)
+            }}
+          >
+            Reset to default
+          </button>
+        </div>
+        <textarea
+          className="w-full h-48 text-sm font-mono bg-muted text-foreground px-3 py-2 rounded border border-border-subtle focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+          value={draftPrompt}
+          onChange={(e) => setDraftPrompt(e.target.value)}
+          onBlur={() => {
+            if (draftPrompt !== systemPrompt) {
+              onSystemPromptChange(draftPrompt)
+            }
+          }}
+        />
+        <p className="text-xs text-muted-foreground mt-2">
+          Use <span className="font-mono">{'{{document}}'}</span> where you
+          want the current note's content injected. If you remove the
+          placeholder, the document is appended after the prompt anyway.
         </p>
       </section>
     </div>

@@ -5,11 +5,13 @@ import {
   useFileRelations,
   useFileHistory
 } from '@/hooks/useStore'
+import { useChat, useOllamaModels } from '@/hooks/useChat'
 import { fontSizeValues } from '@shared/types/store'
 import { LeftSidebar } from './LeftSidebar'
 import { RightSidebar } from './RightSidebar'
 import { StatusBar } from './StatusBar'
 import { ResizeHandle } from './ResizeHandle'
+import { SettingsModal } from '../modals/SettingsModal'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -36,6 +38,7 @@ interface AppLayoutProps {
   onSnapshotCurrent?: () => void
   onRestoreSnapshot?: (snapshotId: string) => void
   onDeleteSnapshot?: (snapshotId: string) => void
+  documentContent?: string
 }
 
 export function AppLayout({
@@ -56,7 +59,8 @@ export function AppLayout({
   documentStats = null,
   onSnapshotCurrent,
   onRestoreSnapshot,
-  onDeleteSnapshot
+  onDeleteSnapshot,
+  documentContent = ''
 }: AppLayoutProps) {
   const { settings, ui, fileTree, isLoading } = useStore()
   const {
@@ -66,11 +70,23 @@ export function AppLayout({
     toggleLeftSidebar,
     toggleRightSidebar,
     toggleRelationExpanded,
-    setSectionExpanded
+    setSectionExpanded,
+    setAIModel
   } = useStoreActions()
 
   const relations = useFileRelations(selectedFile ?? null)
   const history = useFileHistory(selectedFile ?? null)
+  const [showSettings, setShowSettings] = useState(false)
+  const openSettings = useCallback(() => setShowSettings(true), [])
+
+  // AI chat — model list + per-file chat session
+  const { models: ollamaModels, error: ollamaError } = useOllamaModels()
+  const chat = useChat({
+    filePath: selectedFile ?? null,
+    model: settings.ai.model,
+    systemPromptTemplate: settings.ai.systemPrompt,
+    documentText: documentContent
+  })
 
   // Local state for immediate resize feedback. Keeps a local mirror so
   // dragging feels instant, but re-syncs whenever the store reports a
@@ -169,6 +185,7 @@ export function AppLayout({
           selectedFile={selectedFile}
           expandedFolders={ui.expandedFolders}
           onToggleFolderExpanded={toggleFolderExpanded}
+          onOpenSettings={openSettings}
         />
 
         {/* Left resize handle */}
@@ -224,6 +241,19 @@ export function AppLayout({
           onCreateSnapshot={onSnapshotCurrent}
           onRestoreSnapshot={onRestoreSnapshot}
           onDeleteSnapshot={onDeleteSnapshot}
+          chat={{
+            model: settings.ai.model,
+            availableModels: ollamaModels.map((m) => m.name),
+            modelError: ollamaError,
+            onChangeModel: (next) => setAIModel(next || null),
+            onOpenSettings: openSettings,
+            messages: chat.messages,
+            isStreaming: chat.isStreaming,
+            onSend: chat.sendMessage,
+            onAbort: chat.abort,
+            onClear: chat.clear,
+            canSend: !!selectedFile && !!settings.ai.model && !chat.isStreaming
+          }}
         />
       </div>
 
@@ -240,6 +270,11 @@ export function AppLayout({
         rightSidebarVisible={ui.rightSidebarVisible}
         onToggleLeftSidebar={toggleLeftSidebar}
         onToggleRightSidebar={toggleRightSidebar}
+      />
+
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
       />
     </div>
   )

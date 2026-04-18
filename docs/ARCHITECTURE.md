@@ -147,6 +147,34 @@ IPC channels:
 - `tags:rescan` — force full vault rescan
 - Event: `tags:index-changed` broadcast whenever the index mutates
 
+## AI chat (Ollama)
+
+The right sidebar contains an **AI Chat** section that talks to a locally-running [Ollama](https://ollama.com) instance at `http://localhost:11434` (hard-coded for now).
+
+Main process (`src/main/services/ollama-service.ts`) exposes two operations:
+
+- `listModels()` — GET `/api/tags`, returns installed models or a friendly error if Ollama isn't running.
+- `streamChat(model, messages, signal, onDelta, onDone, onError)` — POST `/api/chat` with `stream: true`, parses newline-delimited JSON, and invokes the callbacks per chunk/done/error. Cancellation via `AbortSignal`.
+
+IPC channels:
+
+- `ai:list-models` — returns `{ ok, models }` / `{ ok: false, error }`
+- `ai:chat-start(requestId, model, messages)` — fire-and-forget; streams results via events
+- `ai:chat-abort(requestId)` — cancels an in-flight stream
+
+Renderer events:
+
+- `ai:chat-chunk { requestId, delta }` — token stream
+- `ai:chat-done { requestId }` — stream completed
+- `ai:chat-error { requestId, message }` — stream failed
+
+The `useChat` hook in `src/renderer/src/hooks/useChat.ts` tracks messages, the streaming flag, and an abort handle. Chat state resets whenever the current file changes.
+
+Settings (`settings.ai`):
+
+- `model` — selected Ollama model name
+- `systemPrompt` — template with a `{{document}}` placeholder substituted with the current note at send time
+
 ### Tag propagation (auto-tagging)
 
 When a file is saved via `file:write` or created via `file:create`, `tagsService.propagateTags(path)` runs. For every tag declared in the saved file (min 3 characters), the service walks other indexed files and **inserts a `#` before the first untagged occurrence of the tag word**, then rewrites that file to disk and updates its index entry.

@@ -31,6 +31,12 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
   to 10 snapshots with timestamps, a restore button, and a delete
   button. Snapshots live inside the vault at
   `.arbetsyta/history/{path}/` so they travel with the vault.
+- **Local AI chat (Ollama)** — the right sidebar's AI Chat section
+  talks to a locally-running Ollama instance. The current note is
+  injected into the system prompt automatically, so you can ask
+  questions grounded in whatever you're reading/writing. Pick any
+  installed Ollama model, edit the system prompt in Settings → AI,
+  and stream responses token-by-token. All local, no network.
 - **Always-safe auto-save** — debounced auto-save after you stop typing,
   plus eager save on window blur and before quit. Cmd/Ctrl+S also works.
 - **Document stats** — live word count, character count, paragraph

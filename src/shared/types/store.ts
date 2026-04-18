@@ -11,11 +11,21 @@ export interface FileNode {
 
 export type FontSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
+export interface AISettings {
+  // Selected Ollama model name (e.g. "llama3.1:latest"). null if the
+  // user hasn't picked one yet or if Ollama isn't reachable.
+  model: string | null
+  // System prompt template. May contain the placeholder "{{document}}"
+  // which is substituted with the current note's content at send time.
+  systemPrompt: string
+}
+
 export interface AppSettings {
   vaultPath: string | null
   theme: 'dark' | 'light'
   fontSize: FontSize
   accentColor: string
+  ai: AISettings
 }
 
 // Font size pixel values
@@ -76,6 +86,8 @@ export interface MainStore {
   setTheme: (theme: 'dark' | 'light') => void
   setFontSize: (size: FontSize) => void
   setAccentColor: (color: string) => void
+  setAIModel: (model: string | null) => void
+  setAISystemPrompt: (prompt: string) => void
   toggleLeftSidebar: () => void
   toggleRightSidebar: () => void
   setLeftSidebarWidth: (width: number) => void
@@ -91,11 +103,23 @@ export interface MainStore {
 }
 
 // Default values
+export const DEFAULT_AI_SYSTEM_PROMPT = `You are a thoughtful writing companion for the markdown document provided below. Be concise, reference specific passages when relevant, and match the document's existing voice and language. When the user asks about something not in the document, answer briefly from general knowledge but make it clear you're stepping outside the document.
+
+---
+{{document}}
+---`
+
+export const defaultAISettings: AISettings = {
+  model: null,
+  systemPrompt: DEFAULT_AI_SYSTEM_PROMPT
+}
+
 export const defaultSettings: AppSettings = {
   vaultPath: null,
   theme: 'dark',
   fontSize: 'md',
-  accentColor: '#7c8cff'
+  accentColor: '#7c8cff',
+  ai: defaultAISettings
 }
 
 export const defaultUIState: UIState = {
