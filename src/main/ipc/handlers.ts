@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, renameS
 import { join, extname } from 'path'
 import type { FileNode, FontSize } from '@shared/types/store'
 import { mainStore } from '../store'
+import { tagsService } from '../services/tags-service'
 
 export const MEDIA_FOLDER_NAME = 'vault_media'
 
@@ -119,6 +120,13 @@ function initVaultStructure(vaultPath: string): boolean {
   }
 }
 
+function broadcastTagIndex(): void {
+  const snapshot = tagsService.getSnapshot()
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send('tags:index-changed', snapshot)
+  })
+}
+
 export function registerIPCHandlers(): void {
   // Dialog handlers
   ipcMain.handle('dialog:select-vault', async () => {
@@ -139,6 +147,8 @@ export function registerIPCHandlers(): void {
   ipcMain.handle('file:write', async (_, path: string, content: string) => {
     try {
       writeFileSync(path, content, 'utf-8')
+      tagsService.updateFile(path, content)
+      broadcastTagIndex()
       return true
     } catch {
       return false
@@ -148,6 +158,8 @@ export function registerIPCHandlers(): void {
   ipcMain.handle('file:create', async (_, path: string, content = '') => {
     try {
       writeFileSync(path, content, 'utf-8')
+      tagsService.updateFile(path, content)
+      broadcastTagIndex()
       return true
     } catch {
       return false
@@ -157,6 +169,8 @@ export function registerIPCHandlers(): void {
   ipcMain.handle('file:delete', async (_, path: string) => {
     try {
       unlinkSync(path)
+      tagsService.removeFile(path)
+      broadcastTagIndex()
       return true
     } catch {
       return false
@@ -166,6 +180,8 @@ export function registerIPCHandlers(): void {
   ipcMain.handle('file:rename', async (_, oldPath: string, newPath: string) => {
     try {
       renameSync(oldPath, newPath)
+      tagsService.renameFile(oldPath, newPath)
+      broadcastTagIndex()
       return true
     } catch {
       return false
@@ -241,6 +257,7 @@ export function registerIPCHandlers(): void {
     const tree = buildFileTree(path)
     mainStore.getState().setFileTree(tree)
     mainStore.getState().setVaultPath(path)
+    tagsService.scanVault(path)
 
     // Notify all windows of the state change
     BrowserWindow.getAllWindows().forEach((win) => {
@@ -249,6 +266,7 @@ export function registerIPCHandlers(): void {
         fileTree: tree
       })
     })
+    broadcastTagIndex()
 
     return tree
   })
@@ -260,6 +278,24 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle('vault:init', async (_, path: string) => {
     return initVaultStructure(path)
+  })
+
+  // Tag index handlers
+  ipcMain.handle('tags:get-index', async () => {
+    return tagsService.getSnapshot()
+  })
+
+  ipcMain.handle('tags:get-relations', async (_, filePath: string) => {
+    return tagsService.getRelations(filePath)
+  })
+
+  ipcMain.handle('tags:rescan', async () => {
+    const vaultPath = mainStore.getState().settings.vaultPath
+    if (vaultPath) {
+      tagsService.scanVault(vaultPath)
+      broadcastTagIndex()
+    }
+    return tagsService.getSnapshot()
   })
 
   // Store handlers

@@ -67,6 +67,8 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Increase editor + title horizontal padding so text has breathing room when sidebars are at max
 - [x] Fix sidebar widths reverting to default on Cmd+R reload (sync local state to store after IPC hydration)
 - [x] Full `npm audit` pass — Electron 41, React 19, TS 6; 0 vulnerabilities (was 24)
+- [x] Hashtag-based internal linking — `#tag` in editor styled as clickable, in-memory tag index on main process tracks declarations + weak (plain-text) mentions across the vault
+- [x] Relations section in right sidebar — per-tag list of "Also tagged" + "Mentioned" related notes, live-updates as files save/create/delete/rename
 
 ## Future Enhancements
 

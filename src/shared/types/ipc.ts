@@ -1,4 +1,5 @@
 import type { AppSettings, UIState, FileNode } from './store'
+import type { FileRelations, TagIndexSnapshot } from './tags'
 
 // IPC Channel definitions for type-safe communication
 
@@ -54,6 +55,22 @@ export interface AttachmentChannels {
   'shell:open-external': {
     args: [url: string]
     result: void
+  }
+}
+
+// Tag index channels
+export interface TagChannels {
+  'tags:get-index': {
+    args: []
+    result: TagIndexSnapshot
+  }
+  'tags:get-relations': {
+    args: [filePath: string]
+    result: FileRelations
+  }
+  'tags:rescan': {
+    args: []
+    result: TagIndexSnapshot
   }
 }
 
@@ -131,7 +148,8 @@ export type IPCChannels = DialogChannels &
   AttachmentChannels &
   FolderChannels &
   VaultChannels &
-  StoreChannels
+  StoreChannels &
+  TagChannels
 
 // Helper type to extract channel names
 export type IPCChannelName = keyof IPCChannels
@@ -153,6 +171,7 @@ export interface MainToRendererEvents {
     type: 'add' | 'change' | 'unlink'
     path: string
   }
+  'tags:index-changed': TagIndexSnapshot
 }
 
 export type MainToRendererEventName = keyof MainToRendererEvents

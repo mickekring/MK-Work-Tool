@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, type ReactNode } from 'react'
-import { useStore, useStoreActions } from '@/hooks/useStore'
+import { useStore, useStoreActions, useFileRelations } from '@/hooks/useStore'
 import { fontSizeValues } from '@shared/types/store'
 import { LeftSidebar } from './LeftSidebar'
 import { RightSidebar } from './RightSidebar'
@@ -55,6 +55,8 @@ export function AppLayout({
     toggleLeftSidebar,
     toggleRightSidebar
   } = useStoreActions()
+
+  const relations = useFileRelations(selectedFile ?? null)
 
   // Local state for immediate resize feedback. Keeps a local mirror so
   // dragging feels instant, but re-syncs whenever the store reports a
@@ -193,6 +195,8 @@ export function AppLayout({
           stats={documentStats}
           fileName={fileName}
           lastModified={null}
+          relations={relations}
+          onOpenFile={onFileSelect}
         />
       </div>
 

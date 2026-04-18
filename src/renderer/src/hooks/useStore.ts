@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { AppSettings, UIState, FileNode, FontSize } from '@shared/types/store'
+import type { FileRelations, TagIndexSnapshot } from '@shared/types/tags'
 
 interface StoreState {
   settings: AppSettings
@@ -194,4 +195,57 @@ export function useFileOperations() {
     deleteFolder,
     saveAttachment
   }
+}
+
+// Relations for a specific file, auto-refreshed when the main process
+// broadcasts that its tag index has changed (after any file save/delete/rename).
+export function useFileRelations(filePath: string | null): FileRelations | null {
+  const [relations, setRelations] = useState<FileRelations | null>(null)
+
+  const fetchRelations = useCallback(async () => {
+    if (!filePath) {
+      setRelations(null)
+      return
+    }
+    try {
+      const data = await window.api.invoke<FileRelations>(
+        'tags:get-relations',
+        filePath
+      )
+      setRelations(data)
+    } catch (err) {
+      console.error('Failed to load file relations:', err)
+      setRelations(null)
+    }
+  }, [filePath])
+
+  useEffect(() => {
+    fetchRelations()
+    // Re-fetch whenever the global index changes
+    const unsubscribe = window.api.on('tags:index-changed', () => {
+      fetchRelations()
+    })
+    return unsubscribe
+  }, [fetchRelations])
+
+  return relations
+}
+
+// Access the full tag-index snapshot if you need it (e.g. for a tag browser).
+export function useTagIndex(): TagIndexSnapshot | null {
+  const [snapshot, setSnapshot] = useState<TagIndexSnapshot | null>(null)
+
+  useEffect(() => {
+    window.api
+      .invoke<TagIndexSnapshot>('tags:get-index')
+      .then(setSnapshot)
+      .catch((err) => console.error('Failed to load tag index:', err))
+
+    const unsubscribe = window.api.on('tags:index-changed', (update) => {
+      setSnapshot(update as TagIndexSnapshot)
+    })
+    return unsubscribe
+  }, [])
+
+  return snapshot
 }

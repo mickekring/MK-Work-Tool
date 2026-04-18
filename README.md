@@ -17,6 +17,11 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
 - **Drag-and-drop attachments** — drop any file onto a note; images
   render inline, other files become Cmd/Ctrl-click-openable links. All
   attachments are copied into a `vault_media/` folder inside your vault.
+- **Hashtag-based linking with auto-relations** — write `#Topic` anywhere
+  to mark a note. The right sidebar lists every other note that either
+  declares the same tag explicitly *or* just mentions the word in plain
+  text, so you don't have to manually tag every occurrence across your
+  vault. Click any related note to open it.
 - **Always-safe auto-save** — debounced auto-save after you stop typing,
   plus eager save on window blur and before quit. Cmd/Ctrl+S also works.
 - **Document stats** — live word count, character count, paragraph

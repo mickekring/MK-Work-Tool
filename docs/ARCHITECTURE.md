@@ -122,6 +122,30 @@ When a file is dragged from the OS into the editor area:
 3. The main process ensures `{vault}/vault_media/` exists, copies the source file there with collision-safe renaming (`name-1.ext`, `name-2.ext`, ...), and returns the relative path.
 4. The renderer inserts `![name](vault_media/...)` for images or `[name](vault_media/...)` for other files at the cursor position.
 
+## Tag index
+
+An in-memory index on the main process tracks `#tag` declarations across all `.md` files in the vault. Live-updated as files are saved, created, deleted, or renamed (see IPC handlers for `file:*`).
+
+Data structures (in [src/main/services/tags-service.ts](../src/main/services/tags-service.ts)):
+
+- `filesByTag: Map<tag, Set<file>>` — which files declare each tag
+- `tagsByFile: Map<file, Set<tag>>` — inverse lookup for fast updates
+- `contentByFile: Map<file, string>` — cached content for weak-match (mention) lookup
+- `displayByTag: Map<lowerTag, origCaseTag>` — preserves the first-seen casing so "NIP" and "nip" show up as whichever was typed first
+
+Matching rules:
+
+- Tag recognition: `(?<=^|[^\w#])#([\p{L}\p{N}_-]{2,})` — min 2 chars, not preceded by a word char or another `#`, supports Unicode letters (å, ä, ö).
+- Headings are excluded in the editor highlighter (a `#` at the start of an ATX heading shouldn't look like a tag).
+- "Mentioned" (weak) match: `(?<=^|[^\p{L}\p{N}_])<tag>(?=[^\p{L}\p{N}_]|$)` case-insensitive word-boundary search through cached content.
+
+IPC channels:
+
+- `tags:get-index` — full snapshot of all tags + files that declare each
+- `tags:get-relations(filePath)` — per-file: tags declared + `taggedIn` (strong) + `mentionedIn` (weak) related files
+- `tags:rescan` — force full vault rescan
+- Event: `tags:index-changed` broadcast whenever the index mutates
+
 ### Loading images in the renderer
 
 Images reference `vault_media/filename.ext` in markdown, but the renderer can't load `file://` URLs directly (cross-origin with the `http://localhost:5173` dev server, same-origin issues in production). A custom `vault-media://` protocol is registered in `src/main/index.ts`:

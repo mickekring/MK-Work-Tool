@@ -179,6 +179,21 @@ body {
   color: var(--color-foreground);
 }
 
+/* Inline #tag tokens — colored, subtle background, clickable feel */
+.cm-tag {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  padding: 0.05em 0.35em;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast) ease;
+}
+
+.cm-tag:hover {
+  background: color-mix(in srgb, var(--color-primary) 24%, transparent);
+}
+
 /* Inline image widget rendered in the editor */
 .cm-inline-image {
   display: block;

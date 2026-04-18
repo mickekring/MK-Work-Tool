@@ -10,6 +10,7 @@ import { theme } from './theme'
 import { hideMarkdownMarks } from './markHiding'
 import { inlineImages } from './inlineImages'
 import { linkClicks, imageWidgetClicks } from './linkClicks'
+import { tagHighlight } from './tagHighlight'
 
 export interface UseCodeMirrorOptions {
   initialValue?: string
@@ -104,6 +105,9 @@ export function useCodeMirror({
 
       // Render inline images for ![alt](vault_media/...) when not editing
       inlineImages,
+
+      // Highlight #tag tokens (outside headings) as clickable links
+      tagHighlight,
 
       // Cmd/Ctrl-click opens links + inline images
       linkClicks,

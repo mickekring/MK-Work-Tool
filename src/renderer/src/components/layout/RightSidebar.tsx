@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import type { FileRelations } from '@shared/types/tags'
+
 interface DocumentStats {
   wordCount: number
   characterCount: number
@@ -12,6 +15,8 @@ interface RightSidebarProps {
   stats: DocumentStats | null
   fileName?: string | null
   lastModified?: Date | null
+  relations?: FileRelations | null
+  onOpenFile?: (path: string) => void
 }
 
 export function RightSidebar({
@@ -19,7 +24,9 @@ export function RightSidebar({
   isVisible,
   stats,
   fileName,
-  lastModified
+  lastModified,
+  relations,
+  onOpenFile
 }: RightSidebarProps) {
   if (!isVisible) return null
 
@@ -40,10 +47,13 @@ export function RightSidebar({
       {/* Divider */}
       <div className="h-px bg-border-subtle mx-3" />
 
-      {/* Stats content */}
+      {/* Content area */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
+        {/* Relations (tags + related files) */}
+        <RelationsSection relations={relations ?? null} onOpenFile={onOpenFile} />
+
         {stats ? (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-6">
             {/* File info */}
             {fileName && (
               <section>
@@ -128,6 +138,151 @@ function StatRow({ label, value }: { label: string; value: string }) {
       <span className="text-sm text-foreground font-mono tabular-nums">{value}</span>
     </div>
   )
+}
+
+function RelationsSection({
+  relations,
+  onOpenFile
+}: {
+  relations: FileRelations | null
+  onOpenFile?: (path: string) => void
+}) {
+  if (!relations) return null
+
+  return (
+    <section>
+      <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">
+        Relations
+      </h3>
+      {relations.tags.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Add <code className="text-[0.9em]">#tag</code> anywhere in this note
+          to see related documents.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {relations.tags.map((tagInfo) => (
+            <TagRelationGroup
+              key={tagInfo.tag}
+              tag={tagInfo.tag}
+              taggedIn={tagInfo.taggedIn}
+              mentionedIn={tagInfo.mentionedIn}
+              onOpenFile={onOpenFile}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function TagRelationGroup({
+  tag,
+  taggedIn,
+  mentionedIn,
+  onOpenFile
+}: {
+  tag: string
+  taggedIn: string[]
+  mentionedIn: string[]
+  onOpenFile?: (path: string) => void
+}) {
+  const total = taggedIn.length + mentionedIn.length
+  const [expanded, setExpanded] = useState(total > 0 && total <= 10)
+
+  return (
+    <div className="border border-border-subtle rounded-md">
+      <button
+        className="w-full flex items-center justify-between px-2.5 py-1.5 hover:bg-sidebar-hover rounded-md transition-colors"
+        onClick={() => setExpanded((e) => !e)}
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className={`text-muted-foreground flex-shrink-0 transition-transform ${
+              expanded ? 'rotate-90' : ''
+            }`}
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span
+            className="text-sm font-medium truncate"
+            style={{ color: 'var(--color-primary)' }}
+          >
+            #{tag}
+          </span>
+        </span>
+        <span className="text-xs text-muted-foreground font-mono tabular-nums pl-2">
+          {total}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="px-2 pb-2 space-y-2">
+          {taggedIn.length > 0 && (
+            <RelationList
+              label="Also tagged"
+              files={taggedIn}
+              onOpenFile={onOpenFile}
+            />
+          )}
+          {mentionedIn.length > 0 && (
+            <RelationList
+              label="Mentioned"
+              files={mentionedIn}
+              onOpenFile={onOpenFile}
+            />
+          )}
+          {total === 0 && (
+            <p className="text-xs text-muted-foreground px-1">
+              No other documents yet.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RelationList({
+  label,
+  files,
+  onOpenFile
+}: {
+  label: string
+  files: string[]
+  onOpenFile?: (path: string) => void
+}) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 px-1 py-1">
+        {label}
+      </div>
+      <ul className="space-y-0.5">
+        {files.map((path) => (
+          <li key={path}>
+            <button
+              className="w-full text-left text-xs text-foreground/90 hover:text-foreground hover:bg-sidebar-hover rounded px-1.5 py-1 truncate transition-colors"
+              onClick={() => onOpenFile?.(path)}
+              title={path}
+            >
+              {fileDisplayName(path)}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function fileDisplayName(absPath: string): string {
+  const name = absPath.substring(absPath.lastIndexOf('/') + 1)
+  return name.replace(/\.md$/, '')
 }
 
 function formatNumber(num: number): string {
