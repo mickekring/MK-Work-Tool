@@ -1,0 +1,284 @@
+@import "tailwindcss";
+
+/* Dark mode variant using class strategy */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Theme CSS variables */
+@theme {
+  /* Colors - Dark mode (default) - Obsidian-inspired */
+  --color-background: #1a1a1a;
+  --color-foreground: #e0e0e0;
+  --color-muted: #2d2d2d;
+  --color-muted-foreground: #a0a0a0;
+  --color-border: #3a3a3a;
+  --color-border-subtle: #2d2d2d;
+  --color-primary: #7c8cff;
+  --color-primary-foreground: #ffffff;
+  --color-sidebar: #262626;
+  --color-sidebar-hover: #303030;
+  --color-accent: #7c8cff;
+  --color-accent-muted: #5c6bc0;
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-destructive: #f44336;
+
+  /* Typography - Using system fonts for local-first, offline support */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+
+  /* Spacing */
+  --spacing-sidebar-header: 52px;
+
+  /* Animations */
+  --transition-fast: 100ms;
+  --transition-base: 150ms;
+  --transition-slow: 250ms;
+}
+
+/* Light mode overrides */
+.light {
+  --color-background: #fafafa;
+  --color-foreground: #171717;
+  --color-muted: #f0f0f0;
+  --color-muted-foreground: #737373;
+  --color-border: #e5e5e5;
+  --color-border-subtle: #ebebeb;
+  --color-primary: #4f46e5;
+  --color-primary-foreground: #ffffff;
+  --color-sidebar: #f5f5f5;
+  --color-sidebar-hover: #ebebeb;
+  --color-accent: #4f46e5;
+  --color-accent-muted: #6366f1;
+}
+
+/* Base styles */
+html {
+  font-size: var(--font-size-base, 16px);
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* Native macOS title bar drag region */
+.titlebar-drag-region {
+  -webkit-app-region: drag;
+}
+
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* Selection */
+::selection {
+  background: color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+/* Resize handle styling */
+.resize-handle {
+  position: relative;
+  flex-shrink: 0;
+  width: 1px;
+  background: var(--color-border-subtle);
+  cursor: col-resize;
+  transition: background-color var(--transition-fast) ease;
+}
+
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  right: -3px;
+}
+
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: var(--color-primary);
+}
+
+/* Sidebar collapse animation */
+.sidebar-content {
+  transition: opacity var(--transition-base) ease;
+}
+
+.sidebar-collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Subtle fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-slow) ease forwards;
+}
+
+/* Status indicator pulse */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+/* File tree item hover effect */
+.file-tree-item {
+  position: relative;
+  transition: background-color var(--transition-fast) ease;
+}
+
+.file-tree-item:hover {
+  background: var(--color-sidebar-hover);
+}
+
+.file-tree-item.active {
+  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
+}
+
+.file-tree-item.active span {
+  color: var(--color-foreground);
+}
+
+/* Inline image widget rendered in the editor */
+.cm-inline-image {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.cm-inline-image img {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 6px;
+  display: block;
+}
+
+/* Editor drop target highlight when dragging a file over the editor */
+.editor-drop-target {
+  outline: 2px dashed var(--color-primary);
+  outline-offset: -8px;
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+/* Folder icons — filled with accent color for strong visual
+   differentiation from outlined file icons. */
+.folder-icon {
+  color: var(--color-primary);
+  opacity: 0.9;
+  transition: opacity var(--transition-fast) ease;
+}
+
+.file-tree-item:hover .folder-icon,
+.file-tree-item.active .folder-icon {
+  opacity: 1;
+}
+
+/* Monospace text utility */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Button base styles */
+.btn-ghost {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--color-muted-foreground);
+  transition: all var(--transition-fast) ease;
+}
+
+.btn-ghost:hover {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
+
+/* Focus visible outline */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Range slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: var(--color-muted);
+  height: 6px;
+  border-radius: 3px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  margin-top: -5px;
+  border: 2px solid var(--color-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform var(--transition-fast) ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+input[type="range"]::-moz-range-track {
+  background: var(--color-muted);
+  height: 6px;
+  border-radius: 3px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  border: 2px solid var(--color-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
