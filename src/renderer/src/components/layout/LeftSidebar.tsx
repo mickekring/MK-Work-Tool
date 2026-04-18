@@ -277,7 +277,7 @@ export function LeftSidebar({
                 <>
                   <div className="h-px bg-border-subtle mx-3 my-2" />
                   <div className="px-4 pt-1 pb-1 text-xs uppercase tracking-wider text-muted-foreground/70 font-medium">
-                    Media files
+                    Media Vault
                   </div>
                   <FileTreeNodes
                     nodes={fileTree.filter(
@@ -483,6 +483,13 @@ function FileTreeItem({
   const isDragOver = dragOverFolder === node.path
   const paddingLeft = 12 + depth * 16
 
+  // vault_media is a system folder: not renameable, deletable, draggable,
+  // or right-clickable. We also show it with a friendlier display name.
+  const isSystemFolder = isFolder && node.id === 'vault_media'
+  const displayName = isSystemFolder
+    ? 'Media Vault'
+    : node.name.replace(/\.md$/, '')
+
   const handleClick = () => {
     if (isFolder) {
       onToggleFolderExpanded?.(node.id)
@@ -496,6 +503,10 @@ function FileTreeItem({
   }
 
   const handleDragStart = (e: React.DragEvent) => {
+    if (isSystemFolder) {
+      e.preventDefault()
+      return
+    }
     e.stopPropagation()
     e.dataTransfer.setData('text/plain', node.path)
     e.dataTransfer.effectAllowed = 'move'
@@ -537,8 +548,14 @@ function FileTreeItem({
         }`}
         style={{ paddingLeft }}
         onClick={handleClick}
-        onContextMenu={(e) => onContextMenu?.(e, node)}
-        draggable
+        onContextMenu={(e) => {
+          if (isSystemFolder) {
+            e.preventDefault()
+            return
+          }
+          onContextMenu?.(e, node)
+        }}
+        draggable={!isSystemFolder}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -608,7 +625,7 @@ function FileTreeItem({
                 : 'text-foreground/90'
           }`}
         >
-          {node.name.replace(/\.md$/, '')}
+          {displayName}
         </span>
       </button>
 
