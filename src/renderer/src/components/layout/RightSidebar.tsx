@@ -80,7 +80,7 @@ export function RightSidebar({
       </div>
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
         <CollapsibleSection
           id={SECTION_DOCUMENT_INFO}
           title="Document Info"
@@ -154,9 +154,15 @@ function CollapsibleSection({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-md">
+    <section
+      className="rounded-lg border border-border-subtle overflow-hidden"
+      style={{
+        background:
+          'color-mix(in srgb, var(--color-muted) 30%, transparent)'
+      }}
+    >
       <button
-        className="w-full flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-sidebar-hover transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 hover:bg-sidebar-hover transition-colors"
         onClick={() => onToggle?.(id, !expanded)}
         aria-expanded={expanded}
       >
@@ -177,7 +183,11 @@ function CollapsibleSection({
           <polyline points="9 18 15 12 9 6" />
         </svg>
       </button>
-      {expanded && <div className="px-2 pt-2 pb-1">{children}</div>}
+      {expanded && (
+        <div className="px-3 pt-3 pb-3 border-t border-border-subtle">
+          {children}
+        </div>
+      )}
     </section>
   )
 }
