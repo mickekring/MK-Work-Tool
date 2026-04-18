@@ -107,7 +107,7 @@ src/
 | Path | Purpose |
 |------|---------|
 | `~/.arbetsyta/settings.json` | App settings (vault path, theme, font size, accent) |
-| `~/.arbetsyta/ui-state.json` | UI state (sidebar visibility/widths, expanded folders, last opened file) |
+| `~/.arbetsyta/ui-state.json` | UI state (sidebar visibility/widths, expanded folders, per-file expanded relation tags, globally-expanded right-sidebar sections, last opened file) |
 | `~/.arbetsyta/window-state.json` | Electron window bounds (width, height, x, y) |
 | `{vault}/.arbetsyta/config.json` | Per-vault metadata (version, creation date) |
 | `{vault}/**/*.md` | User markdown files |

@@ -70,6 +70,9 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Hashtag-based internal linking — `#tag` in editor styled as clickable, in-memory tag index on main process tracks declarations + weak (plain-text) mentions across the vault
 - [x] Relations section in right sidebar — per-tag list of "Also tagged" + "Mentioned" related notes, live-updates as files save/create/delete/rename
 - [x] Automatic tag propagation — when a file saved with `#Tag` contains 3+ characters, the service inserts `#` before the first untagged occurrence of the tag word in every other file in the vault (word-boundary, case-insensitive, skips files that already contain the tag anywhere)
+- [x] Per-(file, tag) relation group expand/collapse state persisted so choices survive file switches and restarts (default collapsed)
+- [x] Two top-level collapsible right-sidebar sections — Document Info (default collapsed) + Relations (default expanded); globally-remembered state via `store:set-section-expanded`
+- [x] Tag regex excludes pure-digit tokens — hex colors like `#000000` no longer register as tags
 
 ## Future Enhancements
 

@@ -17,11 +17,15 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
 - **Drag-and-drop attachments** — drop any file onto a note; images
   render inline, other files become Cmd/Ctrl-click-openable links. All
   attachments are copied into a `vault_media/` folder inside your vault.
-- **Hashtag-based linking with auto-relations** — write `#Topic` anywhere
-  to mark a note. The right sidebar lists every other note that either
-  declares the same tag explicitly *or* just mentions the word in plain
-  text, so you don't have to manually tag every occurrence across your
-  vault. Click any related note to open it.
+- **Hashtag-based linking + auto-tagging** — write `#Topic` anywhere and
+  the app tags every other note in the vault that mentions "Topic" as
+  plain text (first untagged occurrence, word-boundary, case-insensitive,
+  ≥3 chars). The right sidebar's collapsible **Relations** section lists
+  all connected notes, split into "Also tagged" and "Mentioned" groups.
+  Click any entry to open it.
+- **Collapsible right-sidebar sections** — Document Info (stats) and
+  Relations each have a section heading with its own chevron. Toggle
+  state persists globally across files and restarts.
 - **Always-safe auto-save** — debounced auto-save after you stop typing,
   plus eager save on window blur and before quit. Cmd/Ctrl+S also works.
 - **Document stats** — live word count, character count, paragraph
@@ -32,6 +36,7 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
   (stats) panels can be dragged to resize or toggled from the status
   bar. Widths, visibility, and every scroll-position detail persist.
 - **Session memory** — folder expansion, sidebar widths and visibility,
+  sidebar section collapse state, per-file relation group expansion,
   window size *and* on-screen position, last opened file, theme, accent
   color, and font size are all remembered across restarts.
 - **Offline-first** — no telemetry, no network calls, no fonts loaded
