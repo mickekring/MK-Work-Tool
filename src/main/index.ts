@@ -5,6 +5,10 @@ import { registerIPCHandlers } from './ipc/handlers'
 import { mainStore } from './store'
 import { settingsService } from './services/settings-service'
 
+// Icon used for the BrowserWindow in dev. In packaged builds,
+// electron-builder uses build/icon.png to generate .icns/.ico.
+const APP_ICON = join(__dirname, '../../build/icon.png')
+
 // Register custom scheme before app is ready so the renderer treats
 // vault-media:// URLs as secure/standard and can load images from them.
 protocol.registerSchemesAsPrivileged([
@@ -41,6 +45,8 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     show: false,
+    title: 'Rune',
+    icon: APP_ICON,
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 16, y: 16 },
     backgroundColor: '#0f0f0f',
@@ -106,8 +112,16 @@ app.on('second-instance', () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 app.whenReady().then(() => {
-  // Set app user model id for windows
-  app.setAppUserModelId('com.arbetsyta')
+  // Set app user model id for Windows taskbar grouping
+  app.setAppUserModelId('com.rune.app')
+  // Ensure the dock icon in dev matches the packaged icon (macOS only).
+  if (process.platform === 'darwin' && app.dock) {
+    try {
+      app.dock.setIcon(APP_ICON)
+    } catch {
+      /* best-effort */
+    }
+  }
 
   // Resolve vault-media:// requests to files inside the current vault's
   // vault_media/ folder. The hostname is a placeholder (we always use

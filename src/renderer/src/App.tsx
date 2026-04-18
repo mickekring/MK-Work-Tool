@@ -418,7 +418,7 @@ created: ${new Date().toISOString()}
                 </svg>
               </div>
               <h1 className="text-2xl font-semibold mb-3 text-foreground">
-                {settings.vaultPath ? 'Ready to Write' : 'Welcome to Arbetsyta'}
+                {settings.vaultPath ? 'Ready to Write' : 'Welcome to Rune'}
               </h1>
               <p className="text-muted-foreground mb-6">
                 {settings.vaultPath

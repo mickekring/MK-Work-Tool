@@ -7,6 +7,7 @@ import { tagsService } from '../services/tags-service'
 import { historyService } from '../services/history-service'
 import { listModels, streamChat } from '../services/ollama-service'
 import type { ChatMessageSend } from '@shared/types/ai'
+import { migrateVaultAppDir } from '../services/settings-service'
 
 export const MEDIA_FOLDER_NAME = 'vault_media'
 
@@ -24,7 +25,8 @@ function buildFileTree(
     const entries = readdirSync(dirPath, { withFileTypes: true })
 
     for (const entry of entries) {
-      // Skip hidden files and .arbetsyta config folder
+      // Skip hidden files and the .rune config folder (or any legacy
+      // .arbetsyta, since both begin with a dot).
       if (entry.name.startsWith('.')) continue
 
       const fullPath = join(dirPath, entry.name)
@@ -106,8 +108,8 @@ function saveAttachmentToVault(
 // Initialize vault config (no auto-folder creation - folders are user-managed)
 function initVaultStructure(vaultPath: string): boolean {
   try {
-    // Only create .arbetsyta config folder
-    const configPath = join(vaultPath, '.arbetsyta')
+    // Migrate any legacy app-dir name (e.g. `.arbetsyta`) -> `.rune`
+    const configPath = migrateVaultAppDir(vaultPath)
     if (!existsSync(configPath)) {
       mkdirSync(configPath, { recursive: true })
       writeFileSync(
@@ -270,6 +272,8 @@ export function registerIPCHandlers(): void {
 
   // Vault handlers
   ipcMain.handle('vault:open', async (_, path: string) => {
+    // Migrate legacy `.arbetsyta/` app dir inside the vault, if present.
+    migrateVaultAppDir(path)
     const tree = buildFileTree(path)
     mainStore.getState().setFileTree(tree)
     mainStore.getState().setVaultPath(path)

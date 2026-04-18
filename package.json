@@ -1,7 +1,8 @@
 {
-  "name": "arbetsyta",
+  "name": "rune",
+  "productName": "Rune",
   "version": "0.1.0",
-  "description": "Personal workspace app for markdown notes and project management",
+  "description": "Local-first markdown workspace with tags, history, and on-device AI chat",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "unset ELECTRON_RUN_AS_NODE && electron-vite dev",
@@ -10,6 +11,7 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:win": "electron-vite build && electron-builder --win",
     "build:linux": "electron-vite build && electron-builder --linux",
+    "build:icon": "node scripts/build-icon.mjs",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",

@@ -1,4 +1,4 @@
-# Arbetsyta
+# Rune
 
 A local-first, Obsidian-inspired personal workspace for markdown notes.
 Your notes stay as plain `.md` files on your own disk — no cloud, no
@@ -30,7 +30,7 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
   point-in-time copy of the current file. The History panel lists up
   to 10 snapshots with timestamps, a restore button, and a delete
   button. Snapshots live inside the vault at
-  `.arbetsyta/history/{path}/` so they travel with the vault.
+  `.rune/history/{path}/` so they travel with the vault.
 - **Local AI chat (Ollama)** — the right sidebar's AI Chat section
   talks to a locally-running Ollama instance. The current note is
   injected into the system prompt automatically, so you can ask

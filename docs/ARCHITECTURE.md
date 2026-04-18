@@ -1,8 +1,8 @@
-# Arbetsyta - Architecture
+# Rune - Architecture
 
 ## Overview
 
-Arbetsyta is a local-first, single-vault Electron desktop app for markdown notes. All data lives as plain `.md` files on the user's filesystem — nothing is stored in a database or cloud service.
+Rune is a local-first, single-vault Electron desktop app for markdown notes. All data lives as plain `.md` files on the user's filesystem — nothing is stored in a database or cloud service.
 
 ## Process Model
 
@@ -49,8 +49,8 @@ The main process Zustand store is the single source of truth. It holds:
 
 | Category | Persisted | Storage |
 |----------|-----------|---------|
-| `settings` (vault path, theme, font size, accent color) | Yes | `~/.arbetsyta/settings.json` |
-| `ui` (sidebar visibility/widths, last opened file, expanded folders) | Yes | `~/.arbetsyta/ui-state.json` |
+| `settings` (vault path, theme, font size, accent color) | Yes | `~/.rune/settings.json` |
+| `ui` (sidebar visibility/widths, last opened file, expanded folders) | Yes | `~/.rune/ui-state.json` |
 | `fileTree` (folder/file structure) | No | Rebuilt from disk on vault open |
 | `editor` (current file, content, dirty flag) | No | In-memory only |
 
@@ -106,13 +106,13 @@ src/
 
 | Path | Purpose |
 |------|---------|
-| `~/.arbetsyta/settings.json` | App settings (vault path, theme, font size, accent) |
-| `~/.arbetsyta/ui-state.json` | UI state (sidebar visibility/widths, expanded folders, per-file expanded relation tags, globally-expanded right-sidebar sections, last opened file) |
-| `~/.arbetsyta/window-state.json` | Electron window bounds (width, height, x, y) |
-| `{vault}/.arbetsyta/config.json` | Per-vault metadata (version, creation date) |
+| `~/.rune/settings.json` | App settings (vault path, theme, font size, accent) |
+| `~/.rune/ui-state.json` | UI state (sidebar visibility/widths, expanded folders, per-file expanded relation tags, globally-expanded right-sidebar sections, last opened file) |
+| `~/.rune/window-state.json` | Electron window bounds (width, height, x, y) |
+| `{vault}/.rune/config.json` | Per-vault metadata (version, creation date) |
 | `{vault}/**/*.md` | User markdown files |
 | `{vault}/vault_media/` | Attachments (images, PDFs, etc.) dropped into notes. Auto-created on first drop. |
-| `{vault}/.arbetsyta/history/{relative-path}/{id}.md` | Manual history snapshots (up to 10 per file). Created via the History section in the right sidebar. Older ones pruned automatically. |
+| `{vault}/.rune/history/{relative-path}/{id}.md` | Manual history snapshots (up to 10 per file). Created via the History section in the right sidebar. Older ones pruned automatically. |
 
 ## Attachments
 

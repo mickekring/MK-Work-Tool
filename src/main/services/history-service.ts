@@ -12,7 +12,9 @@ import { join, relative, sep } from 'path'
 import type { FileHistory, SnapshotMeta } from '@shared/types/history'
 import { HISTORY_MAX_SNAPSHOTS } from '@shared/types/history'
 
-const HISTORY_DIR_NAME = '.arbetsyta'
+import { APP_DIR_NAME } from './settings-service'
+
+const HISTORY_DIR_NAME = APP_DIR_NAME
 const HISTORY_SUBDIR = 'history'
 
 // Track the vault lazily so this service doesn't need to be reset on

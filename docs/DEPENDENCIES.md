@@ -1,4 +1,4 @@
-# Arbetsyta - Dependencies
+# Rune - Dependencies
 
 > Last updated: 2026-04-12 — after full audit pass (0 vulnerabilities).
 

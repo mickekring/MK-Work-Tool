@@ -1,5 +1,5 @@
-appId: com.arbetsyta.app
-productName: Arbetsyta
+appId: com.rune.app
+productName: Rune
 directories:
   buildResources: build
 files:

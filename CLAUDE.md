@@ -1,7 +1,7 @@
-# Arbetsyta - Claude Code Project Guide
+# Rune - Claude Code Project Guide
 
 ## Project Overview
-Arbetsyta is a local-first, Electron-based personal workspace app for markdown notes and project management. It features a three-panel layout with live inline markdown rendering (Obsidian-style).
+Rune is a local-first, Electron-based personal workspace app for markdown notes and project management. It features a three-panel layout with live inline markdown rendering (Obsidian-style).
 
 ## Workflow Orchestration
 
@@ -119,7 +119,7 @@ When running from VS Code's terminal, `ELECTRON_RUN_AS_NODE=1` is set (VS Code i
 Uses `titleBarStyle: 'hiddenInset'` with traffic lights. Left sidebar has 52px top padding to accommodate.
 
 ### State Architecture
-- **Main process**: Holds authoritative Zustand store, persists to `~/.arbetsyta/`
+- **Main process**: Holds authoritative Zustand store, persists to `~/.rune/`
 - **Renderer**: Gets state via IPC, receives updates via events
 - **File content**: NOT stored in state - read on demand from disk
 

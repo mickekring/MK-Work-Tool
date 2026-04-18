@@ -1,4 +1,4 @@
-# Arbetsyta - TODO
+# Rune - TODO
 
 ## Known Issues
 
@@ -63,7 +63,7 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Save eagerly on window blur / visibility hidden as extra data-loss insurance
 - [x] Right sidebar parity with left: same 200–400px resize range, nearly-black background, visible by default
 - [x] Sidebar toggle icons in the status bar (both left and right), state persists
-- [x] Window size + on-screen position persisted to `~/.arbetsyta/window-state.json`
+- [x] Window size + on-screen position persisted to `~/.rune/window-state.json`
 - [x] Increase editor + title horizontal padding so text has breathing room when sidebars are at max
 - [x] Fix sidebar widths reverting to default on Cmd+R reload (sync local state to store after IPC hydration)
 - [x] Full `npm audit` pass — Electron 41, React 19, TS 6; 0 vulnerabilities (was 24)
@@ -73,7 +73,7 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Per-(file, tag) relation group expand/collapse state persisted so choices survive file switches and restarts (default collapsed)
 - [x] Two top-level collapsible right-sidebar sections — Document Info (default collapsed) + Relations (default expanded); globally-remembered state via `store:set-section-expanded`
 - [x] Tag regex excludes pure-digit tokens — hex colors like `#000000` no longer register as tags
-- [x] Per-file manual history snapshots (max 10, pruned on overflow) with Save / Restore / Delete UI in a new right-sidebar History section; snapshots stored at `{vault}/.arbetsyta/history/{path}/{id}.md`
+- [x] Per-file manual history snapshots (max 10, pruned on overflow) with Save / Restore / Delete UI in a new right-sidebar History section; snapshots stored at `{vault}/.rune/history/{path}/{id}.md`
 - [x] Fix LeftSidebar hook-order crash when collapsing (rules of hooks violation — guard between hooks)
 - [x] Local AI chat via Ollama — new AI Chat section in the right sidebar streams responses from a local Ollama model; system prompt injects the current document via `{{document}}`; model + prompt editable in Settings → AI; cancel / clear / error-handled
 - [x] Markdown rendering in chat bubbles via react-markdown + remark-gfm (bold, italic, lists, code, tables, etc.)

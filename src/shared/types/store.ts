@@ -69,10 +69,10 @@ export interface EditorState {
 }
 
 export interface MainStore {
-  // Settings - persisted to ~/.arbetsyta/settings.json
+  // Settings - persisted to ~/.rune/settings.json
   settings: AppSettings
 
-  // UI state - persisted to ~/.arbetsyta/ui-state.json
+  // UI state - persisted to ~/.rune/ui-state.json
   ui: UIState
 
   // File tree - rebuilt from disk on vault load

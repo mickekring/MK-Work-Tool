@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!--
+    Rune app icon.
+    - Rounded-square lavender background that matches the default accent color.
+    - Stylized Raidho (ᚱ) rune — the "journey" rune — drawn with bold strokes
+      so it reads clearly even at 16×16.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8c9aff"/>
+      <stop offset="100%" stop-color="#6474e6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#bg)"/>
+
+  <!-- Raidho rune ᚱ -->
+  <g stroke="#ffffff" stroke-width="80" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Vertical stem -->
+    <line x1="360" y1="240" x2="360" y2="784"/>
+    <!-- Top diagonal going up-right -->
+    <line x1="360" y1="240" x2="660" y2="420"/>
+    <!-- Return to stem midpoint, forming the triangle -->
+    <line x1="660" y1="420" x2="360" y2="512"/>
+    <!-- Lower leg going down-right -->
+    <line x1="360" y1="512" x2="680" y2="784"/>
+  </g>
+</svg>

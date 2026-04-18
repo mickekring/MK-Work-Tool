@@ -60,7 +60,7 @@ export function WelcomeModal({ isOpen, onSelectVault, onVaultSelected }: Welcome
 
           {/* Title */}
           <h1 className="text-2xl font-semibold text-center mb-2">
-            Welcome to Arbetsyta
+            Welcome to Rune
           </h1>
 
           <p className="text-muted-foreground text-center mb-8">

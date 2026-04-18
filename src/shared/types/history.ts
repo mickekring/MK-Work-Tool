@@ -1,5 +1,5 @@
 // Per-file manual snapshot history. Stored under
-// {vault}/.arbetsyta/history/{relative-path}/{id}.md on disk.
+// {vault}/.rune/history/{relative-path}/{id}.md on disk.
 
 export interface SnapshotMeta {
   // Filename-safe ISO-ish identifier (e.g. "20260418T142356-123Z").
