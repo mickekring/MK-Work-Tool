@@ -61,8 +61,9 @@ with the pattern
 
 ## Documentation
 
-All project documentation lives in `docs/`. This is the single source of truth — **read before changing, update after changing**. Do not create new docs outside this folder.
+All long-form project documentation lives in `docs/`. This is the single source of truth — **read before changing, update after changing**. Do not create new docs outside this folder.
 
+- **[README.md](README.md)** — User-facing overview (features, getting started, build). Update the features list whenever user-visible functionality is added, changed, or removed. This is what people see on GitHub; keep it accurate.
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System architecture, state model, IPC design, persistence. Update when process model, state shape, IPC channels, or directory layout changes.
 - **[docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)** — All packages with spec + installed version, runtime environment. Update when adding, removing, or upgrading any dependency.
 - **[docs/TODO.md](docs/TODO.md)** — Known issues, in-progress work, future enhancements. Update when starting new work, finding a bug, or completing a feature.
