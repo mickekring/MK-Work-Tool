@@ -140,7 +140,7 @@ export function AIChatSection({
       </div>
 
       {/* Input */}
-      <div className="flex items-end gap-1.5">
+      <div className="flex items-stretch gap-1.5">
         <textarea
           ref={textareaRef}
           rows={1}
@@ -154,24 +154,31 @@ export function AIChatSection({
         />
         {isStreaming ? (
           <button
-            className="p-1.5 rounded text-destructive hover:bg-destructive/15"
+            className="self-end aspect-square rounded flex items-center justify-center transition-colors hover:bg-destructive/15 text-destructive"
+            style={{ height: '2.125rem' }}
             onClick={onAbort}
             title="Stop"
             aria-label="Stop streaming"
           >
             <svg
-              width="12"
-              height="12"
+              className="animate-spin"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
-              fill="currentColor"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
             >
-              <rect x="6" y="6" width="12" height="12" rx="1" />
+              <path d="M12 2 A10 10 0 0 1 22 12" />
+              <circle cx="12" cy="12" r="10" opacity="0.25" />
             </svg>
           </button>
         ) : (
           <button
-            className="p-1.5 rounded disabled:opacity-40 disabled:cursor-not-allowed"
+            className="self-end aspect-square rounded flex items-center justify-center transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
+              height: '2.125rem',
               background: 'var(--color-primary)',
               color: 'var(--color-primary-foreground)'
             }}
@@ -181,8 +188,8 @@ export function AIChatSection({
             aria-label="Send"
           >
             <svg
-              width="12"
-              height="12"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
