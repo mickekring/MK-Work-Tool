@@ -2,29 +2,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <!--
     Rune app icon.
-    - Rounded-square lavender background that matches the default accent color.
-    - Stylized Raidho (ᚱ) rune — the "journey" rune — drawn with bold strokes
-      so it reads clearly even at 16×16.
+
+    macOS Big Sur+ template:
+    - 1024×1024 canvas
+    - App tile centered at 824×824 (≈100 px safe margin)
+    - Tile corner radius 185 px
+    This is what every standard Mac app icon uses — dropping it into
+    the Dock gives the same optical size as Finder, Preview, etc.
+
+    Windows and Linux use a full-bleed square; the centered tile just
+    looks like a floating rounded-square on those platforms, which is
+    fine and consistent with the macOS look.
   -->
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#8c9aff"/>
-      <stop offset="100%" stop-color="#6474e6"/>
+      <stop offset="0%" stop-color="#2f2f2f"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
     </linearGradient>
   </defs>
 
-  <!-- Background -->
-  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#bg)"/>
+  <!-- Tile: 824×824 centered, 100 px margin, rounded -->
+  <rect x="100" y="100" width="824" height="824" rx="185" ry="185" fill="url(#bg)"/>
 
-  <!-- Raidho rune ᚱ -->
-  <g stroke="#ffffff" stroke-width="80" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <!-- Raidho (ᚱ) rune in white, bold strokes for legibility at 16×16 -->
+  <g stroke="#ffffff" stroke-width="76" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <!-- Vertical stem -->
-    <line x1="360" y1="240" x2="360" y2="784"/>
-    <!-- Top diagonal going up-right -->
-    <line x1="360" y1="240" x2="660" y2="420"/>
-    <!-- Return to stem midpoint, forming the triangle -->
-    <line x1="660" y1="420" x2="360" y2="512"/>
-    <!-- Lower leg going down-right -->
-    <line x1="360" y1="512" x2="680" y2="784"/>
+    <line x1="360" y1="260" x2="360" y2="764"/>
+    <!-- Top diagonal up to the peak -->
+    <line x1="360" y1="260" x2="650" y2="440"/>
+    <!-- Return to stem, forming the triangle -->
+    <line x1="650" y1="440" x2="360" y2="528"/>
+    <!-- Lower leg -->
+    <line x1="360" y1="528" x2="680" y2="764"/>
   </g>
 </svg>
