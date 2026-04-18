@@ -80,7 +80,7 @@ export function RightSidebar({
       </div>
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-5">
         <CollapsibleSection
           id={SECTION_DOCUMENT_INFO}
           title="Document Info"
