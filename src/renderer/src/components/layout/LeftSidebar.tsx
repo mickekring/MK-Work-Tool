@@ -57,8 +57,6 @@ export function LeftSidebar({
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null)
 
-  if (!isVisible) return null
-
   const handleCreateFolder = (name: string) => {
     if (vaultPath && onNewFolder) {
       // Use the explicit target (from context menu) or the vault root.
@@ -92,6 +90,10 @@ export function LeftSidebar({
     e.stopPropagation()
     setContextMenu({ x: e.clientX, y: e.clientY, node })
   }, [])
+
+  // Early return goes AFTER all hooks so React's hook-count check
+  // (rules of hooks) stays consistent across visibility toggles.
+  if (!isVisible) return null
 
   const handleRename = async (newName: string) => {
     if (!renameModal?.node || !onRename) return

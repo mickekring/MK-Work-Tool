@@ -123,3 +123,32 @@ useEffect(() => {
 ```
 
 Don't just read `ui.sidebarWidth` directly in the render — that re-renders on every drag-triggered store update and kills the snappy local-drag feel.
+
+---
+
+## 7. Never put an early return between hooks
+
+**When**: Any component with `if (...) return null` guards.
+
+**Mistake**: `LeftSidebar` had eight `useState` calls, then `if (!isVisible) return null`, then a `useCallback` further down. When the sidebar toggled from visible to hidden, React called only the 8 `useState`s; when it toggled back visible, it called 9 hooks. React's "rules of hooks" tripwire fired with "Rendered fewer hooks than expected" and the whole sidebar tree crashed, blanking the app.
+
+**Rule**: ALL hook calls (`useState`, `useCallback`, `useEffect`, `useRef`, `useMemo`, custom hooks) must run on every render in the same order. The early-return guard must come **after** the last hook in the function body, or be moved to the parent (conditionally render the component instead).
+
+**Pattern**:
+```typescript
+// Correct — all hooks first, then the guard, then JSX.
+function Component({ isVisible, ... }) {
+  const [a, setA] = useState(...)
+  const handler = useCallback(..., [])
+  if (!isVisible) return null
+  return <div>...</div>
+}
+
+// Wrong — guard between hooks changes hook count per render.
+function Component({ isVisible, ... }) {
+  const [a, setA] = useState(...)
+  if (!isVisible) return null
+  const handler = useCallback(..., []) // sometimes runs, sometimes not
+  return <div>...</div>
+}
+```

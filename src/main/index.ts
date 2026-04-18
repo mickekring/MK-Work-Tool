@@ -89,8 +89,8 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
-  // DevTools available via Cmd+Option+I in development
-  // (Auto-open disabled to avoid Chromium Autofill.enable errors in console)
+  // DevTools available via Cmd+Option+I in development.
+  // Auto-open disabled to avoid Chromium's Autofill.enable console noise.
 }
 
 // Focus existing window when second instance is launched
