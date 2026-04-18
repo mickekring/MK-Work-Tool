@@ -112,6 +112,7 @@ src/
 | `{vault}/.arbetsyta/config.json` | Per-vault metadata (version, creation date) |
 | `{vault}/**/*.md` | User markdown files |
 | `{vault}/vault_media/` | Attachments (images, PDFs, etc.) dropped into notes. Auto-created on first drop. |
+| `{vault}/.arbetsyta/history/{relative-path}/{id}.md` | Manual history snapshots (up to 10 per file). Created via the History section in the right sidebar. Older ones pruned automatically. |
 
 ## Attachments
 

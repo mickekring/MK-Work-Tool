@@ -23,9 +23,14 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
   ≥3 chars). The right sidebar's collapsible **Relations** section lists
   all connected notes, split into "Also tagged" and "Mentioned" groups.
   Click any entry to open it.
-- **Collapsible right-sidebar sections** — Document Info (stats) and
-  Relations each have a section heading with its own chevron. Toggle
-  state persists globally across files and restarts.
+- **Collapsible right-sidebar sections** — Document Info (stats),
+  Relations, and History each have a section heading with its own
+  chevron. Toggle state persists globally across files and restarts.
+- **Per-file history snapshots** — manual "Save snapshot" creates a
+  point-in-time copy of the current file. The History panel lists up
+  to 10 snapshots with timestamps, a restore button, and a delete
+  button. Snapshots live inside the vault at
+  `.arbetsyta/history/{path}/` so they travel with the vault.
 - **Always-safe auto-save** — debounced auto-save after you stop typing,
   plus eager save on window blur and before quit. Cmd/Ctrl+S also works.
 - **Document stats** — live word count, character count, paragraph

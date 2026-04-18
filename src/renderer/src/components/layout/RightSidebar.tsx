@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import type { FileRelations } from '@shared/types/tags'
+import type { FileHistory, SnapshotMeta } from '@shared/types/history'
 
 // IDs used to persist section expand state globally (across files and
 // across restarts). Keep string literals stable — renaming would lose
 // the user's persisted preferences.
 export const SECTION_DOCUMENT_INFO = 'document-info'
 export const SECTION_RELATIONS = 'relations'
+export const SECTION_HISTORY = 'history'
 
 interface DocumentStats {
   wordCount: number
@@ -27,6 +29,11 @@ interface RightSidebarProps {
   onToggleRelationExpanded?: (tag: string) => void
   sectionsExpanded?: Record<string, boolean>
   onSetSectionExpanded?: (sectionId: string, expanded: boolean) => void
+  history?: FileHistory | null
+  canSnapshot?: boolean
+  onCreateSnapshot?: () => void
+  onRestoreSnapshot?: (snapshotId: string) => void
+  onDeleteSnapshot?: (snapshotId: string) => void
 }
 
 export function RightSidebar({
@@ -40,7 +47,12 @@ export function RightSidebar({
   expandedRelations,
   onToggleRelationExpanded,
   sectionsExpanded,
-  onSetSectionExpanded
+  onSetSectionExpanded,
+  history,
+  canSnapshot,
+  onCreateSnapshot,
+  onRestoreSnapshot,
+  onDeleteSnapshot
 }: RightSidebarProps) {
   if (!isVisible) return null
 
@@ -48,6 +60,8 @@ export function RightSidebar({
     sectionsExpanded?.[SECTION_DOCUMENT_INFO] ?? false // default collapsed
   const relationsExpanded =
     sectionsExpanded?.[SECTION_RELATIONS] ?? true // default expanded
+  const historyExpanded =
+    sectionsExpanded?.[SECTION_HISTORY] ?? false // default collapsed
 
   return (
     <aside
@@ -85,6 +99,21 @@ export function RightSidebar({
             onOpenFile={onOpenFile}
             expandedRelations={expandedRelations ?? []}
             onToggleRelationExpanded={onToggleRelationExpanded}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id={SECTION_HISTORY}
+          title="History"
+          expanded={historyExpanded}
+          onToggle={onSetSectionExpanded}
+        >
+          <HistoryBody
+            history={history ?? null}
+            canSnapshot={canSnapshot ?? false}
+            onCreateSnapshot={onCreateSnapshot}
+            onRestoreSnapshot={onRestoreSnapshot}
+            onDeleteSnapshot={onDeleteSnapshot}
           />
         </CollapsibleSection>
       </div>
@@ -393,4 +422,152 @@ function formatRelativeTime(date: Date): string {
     month: 'short',
     day: 'numeric'
   })
+}
+
+// --- History body ---------------------------------------------------------
+
+function HistoryBody({
+  history,
+  canSnapshot,
+  onCreateSnapshot,
+  onRestoreSnapshot,
+  onDeleteSnapshot
+}: {
+  history: FileHistory | null
+  canSnapshot: boolean
+  onCreateSnapshot?: () => void
+  onRestoreSnapshot?: (snapshotId: string) => void
+  onDeleteSnapshot?: (snapshotId: string) => void
+}) {
+  const snapshots = history?.snapshots ?? []
+
+  return (
+    <div className="space-y-2">
+      <button
+        className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        style={{
+          background: canSnapshot
+            ? 'color-mix(in srgb, var(--color-primary) 18%, transparent)'
+            : 'var(--color-muted)',
+          color: canSnapshot ? 'var(--color-primary)' : 'var(--color-muted-foreground)'
+        }}
+        onClick={onCreateSnapshot}
+        disabled={!canSnapshot}
+        title={canSnapshot ? 'Save a snapshot of the current file' : 'Open a file first'}
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <circle cx="12" cy="12" r="3" />
+          <path d="M8 4V2M16 4V2" />
+        </svg>
+        Save snapshot
+      </button>
+
+      {snapshots.length === 0 ? (
+        <p className="text-xs text-muted-foreground py-2">
+          No snapshots yet. Click "Save snapshot" to mark a version you
+          can return to.
+        </p>
+      ) : (
+        <ul className="space-y-1">
+          {snapshots.map((snap) => (
+            <SnapshotRow
+              key={snap.id}
+              snapshot={snap}
+              onRestore={() => onRestoreSnapshot?.(snap.id)}
+              onDelete={() => onDeleteSnapshot?.(snap.id)}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function SnapshotRow({
+  snapshot,
+  onRestore,
+  onDelete
+}: {
+  snapshot: SnapshotMeta
+  onRestore?: () => void
+  onDelete?: () => void
+}) {
+  const date = new Date(snapshot.timestamp)
+  return (
+    <li className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-sidebar-hover transition-colors group">
+      <div className="flex-1 min-w-0">
+        <div className="text-xs text-foreground/90 truncate font-mono">
+          {formatSnapshotDate(date)}
+        </div>
+        <div className="text-[10px] text-muted-foreground">
+          {formatRelativeTime(date)} · {formatBytes(snapshot.size)}
+        </div>
+      </div>
+      <button
+        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted opacity-60 group-hover:opacity-100 transition-opacity"
+        onClick={onRestore}
+        title="Restore this snapshot"
+        aria-label="Restore snapshot"
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="1 4 1 10 7 10" />
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+        </svg>
+      </button>
+      <button
+        className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-muted opacity-60 group-hover:opacity-100 transition-opacity"
+        onClick={onDelete}
+        title="Delete this snapshot"
+        aria-label="Delete snapshot"
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+        </svg>
+      </button>
+    </li>
+  )
+}
+
+function formatSnapshotDate(d: Date): string {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${h}:${m}`
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }

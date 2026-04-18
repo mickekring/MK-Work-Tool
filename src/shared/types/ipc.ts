@@ -1,5 +1,6 @@
 import type { AppSettings, UIState, FileNode } from './store'
 import type { FileRelations, TagIndexSnapshot } from './tags'
+import type { FileHistory, SnapshotMeta } from './history'
 
 // IPC Channel definitions for type-safe communication
 
@@ -55,6 +56,26 @@ export interface AttachmentChannels {
   'shell:open-external': {
     args: [url: string]
     result: void
+  }
+}
+
+// Per-file history channels
+export interface HistoryChannels {
+  'history:list': {
+    args: [filePath: string]
+    result: FileHistory
+  }
+  'history:create-snapshot': {
+    args: [filePath: string]
+    result: SnapshotMeta | null
+  }
+  'history:restore': {
+    args: [filePath: string, snapshotId: string]
+    result: { content: string } | null
+  }
+  'history:delete-snapshot': {
+    args: [filePath: string, snapshotId: string]
+    result: boolean
   }
 }
 
@@ -157,7 +178,8 @@ export type IPCChannels = DialogChannels &
   FolderChannels &
   VaultChannels &
   StoreChannels &
-  TagChannels
+  TagChannels &
+  HistoryChannels
 
 // Helper type to extract channel names
 export type IPCChannelName = keyof IPCChannels
@@ -180,6 +202,7 @@ export interface MainToRendererEvents {
     path: string
   }
   'tags:index-changed': TagIndexSnapshot
+  'history:changed': { filePath: string }
 }
 
 export type MainToRendererEventName = keyof MainToRendererEvents

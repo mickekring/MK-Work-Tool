@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect, type ReactNode } from 'react'
-import { useStore, useStoreActions, useFileRelations } from '@/hooks/useStore'
+import {
+  useStore,
+  useStoreActions,
+  useFileRelations,
+  useFileHistory
+} from '@/hooks/useStore'
 import { fontSizeValues } from '@shared/types/store'
 import { LeftSidebar } from './LeftSidebar'
 import { RightSidebar } from './RightSidebar'
@@ -28,6 +33,9 @@ interface AppLayoutProps {
     paragraphs: number
     sentences: number
   } | null
+  onSnapshotCurrent?: () => void
+  onRestoreSnapshot?: (snapshotId: string) => void
+  onDeleteSnapshot?: (snapshotId: string) => void
 }
 
 export function AppLayout({
@@ -45,7 +53,10 @@ export function AppLayout({
   isSaving = false,
   cursorLine = 1,
   cursorColumn = 1,
-  documentStats = null
+  documentStats = null,
+  onSnapshotCurrent,
+  onRestoreSnapshot,
+  onDeleteSnapshot
 }: AppLayoutProps) {
   const { settings, ui, fileTree, isLoading } = useStore()
   const {
@@ -59,6 +70,7 @@ export function AppLayout({
   } = useStoreActions()
 
   const relations = useFileRelations(selectedFile ?? null)
+  const history = useFileHistory(selectedFile ?? null)
 
   // Local state for immediate resize feedback. Keeps a local mirror so
   // dragging feels instant, but re-syncs whenever the store reports a
@@ -207,6 +219,11 @@ export function AppLayout({
           }}
           sectionsExpanded={ui.sectionsExpanded}
           onSetSectionExpanded={setSectionExpanded}
+          history={history}
+          canSnapshot={!!selectedFile}
+          onCreateSnapshot={onSnapshotCurrent}
+          onRestoreSnapshot={onRestoreSnapshot}
+          onDeleteSnapshot={onDeleteSnapshot}
         />
       </div>
 

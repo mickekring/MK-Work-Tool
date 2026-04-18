@@ -4,6 +4,7 @@ import { join, extname } from 'path'
 import type { FileNode, FontSize } from '@shared/types/store'
 import { mainStore } from '../store'
 import { tagsService } from '../services/tags-service'
+import { historyService } from '../services/history-service'
 
 export const MEDIA_FOLDER_NAME = 'vault_media'
 
@@ -124,6 +125,12 @@ function broadcastTagIndex(): void {
   const snapshot = tagsService.getSnapshot()
   BrowserWindow.getAllWindows().forEach((win) => {
     win.webContents.send('tags:index-changed', snapshot)
+  })
+}
+
+function broadcastHistoryChanged(filePath: string): void {
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send('history:changed', { filePath })
   })
 }
 
@@ -265,6 +272,7 @@ export function registerIPCHandlers(): void {
     mainStore.getState().setFileTree(tree)
     mainStore.getState().setVaultPath(path)
     tagsService.scanVault(path)
+    historyService.setVaultPath(path)
 
     // Notify all windows of the state change
     BrowserWindow.getAllWindows().forEach((win) => {
@@ -286,6 +294,41 @@ export function registerIPCHandlers(): void {
   ipcMain.handle('vault:init', async (_, path: string) => {
     return initVaultStructure(path)
   })
+
+  // History handlers
+  ipcMain.handle('history:list', async (_, filePath: string) => {
+    return historyService.list(filePath)
+  })
+
+  ipcMain.handle('history:create-snapshot', async (_, filePath: string) => {
+    const meta = historyService.createSnapshot(filePath)
+    if (meta) broadcastHistoryChanged(filePath)
+    return meta
+  })
+
+  ipcMain.handle(
+    'history:restore',
+    async (_, filePath: string, snapshotId: string) => {
+      const result = historyService.restore(filePath, snapshotId)
+      if (result) {
+        // Re-index and propagate tags from the restored content
+        tagsService.updateFile(filePath, result.content)
+        tagsService.propagateTags(filePath)
+        broadcastTagIndex()
+        broadcastHistoryChanged(filePath)
+      }
+      return result
+    }
+  )
+
+  ipcMain.handle(
+    'history:delete-snapshot',
+    async (_, filePath: string, snapshotId: string) => {
+      const ok = historyService.deleteSnapshot(filePath, snapshotId)
+      if (ok) broadcastHistoryChanged(filePath)
+      return ok
+    }
+  )
 
   // Tag index handlers
   ipcMain.handle('tags:get-index', async () => {

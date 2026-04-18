@@ -73,6 +73,8 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Per-(file, tag) relation group expand/collapse state persisted so choices survive file switches and restarts (default collapsed)
 - [x] Two top-level collapsible right-sidebar sections — Document Info (default collapsed) + Relations (default expanded); globally-remembered state via `store:set-section-expanded`
 - [x] Tag regex excludes pure-digit tokens — hex colors like `#000000` no longer register as tags
+- [x] Per-file manual history snapshots (max 10, pruned on overflow) with Save / Restore / Delete UI in a new right-sidebar History section; snapshots stored at `{vault}/.arbetsyta/history/{path}/{id}.md`
+- [x] Fix LeftSidebar hook-order crash when collapsing (rules of hooks violation — guard between hooks)
 
 ## Future Enhancements
 

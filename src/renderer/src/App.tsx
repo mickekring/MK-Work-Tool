@@ -3,7 +3,8 @@ import { AppLayout } from '@/components/layout'
 import { MarkdownEditor, type MarkdownEditorHandle } from '@/components/editor/MarkdownEditor'
 import { WelcomeModal } from '@/components/modals/WelcomeModal'
 import { EditableTitle } from '@/components/editor/EditableTitle'
-import { useStore, useFileOperations } from '@/hooks/useStore'
+import { useStore, useFileOperations, useHistoryActions } from '@/hooks/useStore'
+import { ConfirmModal } from '@/components/modals/ConfirmModal'
 
 function App(): React.JSX.Element {
   const { settings, isLoading } = useStore()
@@ -20,6 +21,7 @@ function App(): React.JSX.Element {
     initVault,
     saveAttachment
   } = useFileOperations()
+  const { createSnapshot, restoreSnapshot, deleteSnapshot } = useHistoryActions()
 
   // Editor state
   const [currentFile, setCurrentFile] = useState<string | null>(null)
@@ -28,6 +30,9 @@ function App(): React.JSX.Element {
   const [isSaving, setIsSaving] = useState(false)
   const [cursorLine, setCursorLine] = useState(1)
   const [cursorColumn, setCursorColumn] = useState(1)
+  const [restorePending, setRestorePending] = useState<{
+    snapshotId: string
+  } | null>(null)
 
   // Refs for latest values (to avoid stale closures)
   const contentRef = useRef(content)
@@ -249,6 +254,65 @@ created: ${new Date().toISOString()}
     [handleRename]
   )
 
+  // Snapshot the currently open file. Flushes pending changes to disk
+  // first (via handleSave) so the snapshot reflects what the user sees.
+  const handleSnapshot = useCallback(async () => {
+    const path = currentFileRef.current
+    if (!path) return
+    try {
+      if (isDirtyRef.current) {
+        const latest = editorRef.current?.getValue() ?? contentRef.current
+        await writeFile(path, latest)
+        isDirtyRef.current = false
+        setIsDirty(false)
+      }
+      await createSnapshot(path)
+    } catch (error) {
+      console.error('Failed to create snapshot:', error)
+    }
+  }, [createSnapshot, writeFile])
+
+  // Called when the user clicks the rewind icon on a snapshot row.
+  // Opens a confirmation modal; the actual restore runs in
+  // confirmRestoreSnapshot below.
+  const handleRequestRestore = useCallback((snapshotId: string) => {
+    setRestorePending({ snapshotId })
+  }, [])
+
+  const confirmRestoreSnapshot = useCallback(async () => {
+    if (!restorePending || !currentFile) {
+      setRestorePending(null)
+      return
+    }
+    try {
+      const result = await restoreSnapshot(currentFile, restorePending.snapshotId)
+      if (result) {
+        // Replace in-memory content with the restored text so the editor
+        // re-renders from the new initialValue.
+        contentRef.current = result.content
+        isDirtyRef.current = false
+        setContent(result.content)
+        setIsDirty(false)
+      }
+    } catch (error) {
+      console.error('Failed to restore snapshot:', error)
+    } finally {
+      setRestorePending(null)
+    }
+  }, [restorePending, currentFile, restoreSnapshot])
+
+  const handleDeleteSnapshot = useCallback(
+    async (snapshotId: string) => {
+      if (!currentFile) return
+      try {
+        await deleteSnapshot(currentFile, snapshotId)
+      } catch (error) {
+        console.error('Failed to delete snapshot:', error)
+      }
+    },
+    [currentFile, deleteSnapshot]
+  )
+
   // Refresh vault
   const handleRefresh = useCallback(async () => {
     if (settings.vaultPath) {
@@ -310,6 +374,9 @@ created: ${new Date().toISOString()}
         cursorLine={cursorLine}
         cursorColumn={cursorColumn}
         documentStats={documentStats}
+        onSnapshotCurrent={handleSnapshot}
+        onRestoreSnapshot={handleRequestRestore}
+        onDeleteSnapshot={handleDeleteSnapshot}
       >
         {/* Main editor area content */}
         {currentFile ? (
@@ -391,6 +458,18 @@ created: ${new Date().toISOString()}
         isOpen={showWelcomeModal}
         onSelectVault={selectVault}
         onVaultSelected={handleVaultSelected}
+      />
+
+      {/* Snapshot restore confirmation */}
+      <ConfirmModal
+        isOpen={restorePending !== null}
+        title="Restore snapshot"
+        message="This will replace the current file content with the snapshot. Your latest edits will be overwritten — save a snapshot first if you want to keep them."
+        confirmLabel="Restore"
+        cancelLabel="Cancel"
+        variant="destructive"
+        onConfirm={confirmRestoreSnapshot}
+        onCancel={() => setRestorePending(null)}
       />
     </>
   )

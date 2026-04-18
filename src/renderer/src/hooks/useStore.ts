@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { AppSettings, UIState, FileNode, FontSize } from '@shared/types/store'
 import type { FileRelations, TagIndexSnapshot } from '@shared/types/tags'
+import type { FileHistory, SnapshotMeta } from '@shared/types/history'
 
 interface StoreState {
   settings: AppSettings
@@ -247,6 +248,74 @@ export function useFileRelations(filePath: string | null): FileRelations | null 
   }, [fetchRelations])
 
   return relations
+}
+
+// Snapshot history for a specific file, auto-refreshed when the main
+// process broadcasts history:changed for that path.
+export function useFileHistory(filePath: string | null): FileHistory | null {
+  const [history, setHistory] = useState<FileHistory | null>(null)
+
+  const fetchHistory = useCallback(async () => {
+    if (!filePath) {
+      setHistory(null)
+      return
+    }
+    try {
+      const data = await window.api.invoke<FileHistory>(
+        'history:list',
+        filePath
+      )
+      setHistory(data)
+    } catch (err) {
+      console.error('Failed to load file history:', err)
+      setHistory(null)
+    }
+  }, [filePath])
+
+  useEffect(() => {
+    fetchHistory()
+    const unsubscribe = window.api.on('history:changed', (update) => {
+      const u = update as { filePath: string }
+      if (u?.filePath === filePath) fetchHistory()
+    })
+    return unsubscribe
+  }, [fetchHistory, filePath])
+
+  return history
+}
+
+// Snapshot action wrappers.
+export function useHistoryActions() {
+  const createSnapshot = useCallback(async (filePath: string) => {
+    return window.api.invoke<SnapshotMeta | null>(
+      'history:create-snapshot',
+      filePath
+    )
+  }, [])
+
+  const restoreSnapshot = useCallback(
+    async (filePath: string, snapshotId: string) => {
+      return window.api.invoke<{ content: string } | null>(
+        'history:restore',
+        filePath,
+        snapshotId
+      )
+    },
+    []
+  )
+
+  const deleteSnapshot = useCallback(
+    async (filePath: string, snapshotId: string) => {
+      return window.api.invoke<boolean>(
+        'history:delete-snapshot',
+        filePath,
+        snapshotId
+      )
+    },
+    []
+  )
+
+  return { createSnapshot, restoreSnapshot, deleteSnapshot }
 }
 
 // Access the full tag-index snapshot if you need it (e.g. for a tag browser).
