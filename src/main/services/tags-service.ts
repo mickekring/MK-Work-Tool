@@ -1,4 +1,10 @@
-import { readFileSync, readdirSync, statSync, existsSync } from 'fs'
+import {
+  readFileSync,
+  readdirSync,
+  statSync,
+  existsSync,
+  writeFileSync
+} from 'fs'
 import { join } from 'path'
 import type {
   FileRelations,
@@ -179,6 +185,63 @@ export const tagsService = {
         console.error(`tags: failed to index renamed ${newPath}`, error)
       }
     }
+  },
+
+  /**
+   * Auto-tag other files in the vault. For every tag declared in the
+   * given source file, walk the other indexed files and prepend a `#`
+   * to the FIRST untagged occurrence of the tag word. Files that
+   * already contain the tag explicitly are left untouched.
+   *
+   * Only tags of 3+ characters propagate — shorter tags like `#it`
+   * are too likely to produce false positives across a vault.
+   *
+   * Returns the list of files that were modified.
+   */
+  propagateTags(sourcePath: string): string[] {
+    const tagsLower = state.tagsByFile.get(sourcePath)
+    if (!tagsLower || tagsLower.size === 0) return []
+
+    const modified: string[] = []
+    // Snapshot so edits to state during iteration don't re-enter
+    const otherFiles = Array.from(state.contentByFile.entries()).filter(
+      ([path]) => path !== sourcePath
+    )
+
+    for (const tagLower of tagsLower) {
+      if (tagLower.length < 3) continue
+      const display = state.displayByTag.get(tagLower) ?? tagLower
+      const alreadyTagged = new Set(state.filesByTag.get(tagLower) ?? [])
+
+      // Case-insensitive, unicode-aware, word-boundary match for the
+      // first un-hashed occurrence. Leading char must be start-of-input
+      // or something that's neither a word char nor a `#`.
+      const pattern = new RegExp(
+        `(?<=^|[^\\p{L}\\p{N}_#])(${escapeRegex(display)})(?=[^\\p{L}\\p{N}_]|$)`,
+        'iu'
+      )
+
+      for (const [otherPath, content] of otherFiles) {
+        if (alreadyTagged.has(otherPath)) continue
+        const match = pattern.exec(content)
+        if (!match) continue
+
+        const insertAt = match.index
+        const newContent =
+          content.slice(0, insertAt) + '#' + content.slice(insertAt)
+
+        try {
+          writeFileSync(otherPath, newContent, 'utf-8')
+          removeFileFromIndex(otherPath)
+          addFileToIndex(otherPath, newContent)
+          modified.push(otherPath)
+        } catch (error) {
+          console.error(`tags: failed to propagate to ${otherPath}`, error)
+        }
+      }
+    }
+
+    return modified
   },
 
   /**

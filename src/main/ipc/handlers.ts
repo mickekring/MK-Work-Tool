@@ -148,6 +148,12 @@ export function registerIPCHandlers(): void {
     try {
       writeFileSync(path, content, 'utf-8')
       tagsService.updateFile(path, content)
+      const propagated = tagsService.propagateTags(path)
+      if (propagated.length > 0) {
+        console.log(
+          `tags: auto-tagged ${propagated.length} file(s) from ${path}`
+        )
+      }
       broadcastTagIndex()
       return true
     } catch {
@@ -159,6 +165,7 @@ export function registerIPCHandlers(): void {
     try {
       writeFileSync(path, content, 'utf-8')
       tagsService.updateFile(path, content)
+      tagsService.propagateTags(path)
       broadcastTagIndex()
       return true
     } catch {

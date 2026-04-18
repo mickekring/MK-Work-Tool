@@ -146,6 +146,20 @@ IPC channels:
 - `tags:rescan` — force full vault rescan
 - Event: `tags:index-changed` broadcast whenever the index mutates
 
+### Tag propagation (auto-tagging)
+
+When a file is saved via `file:write` or created via `file:create`, `tagsService.propagateTags(path)` runs. For every tag declared in the saved file (min 3 characters), the service walks other indexed files and **inserts a `#` before the first untagged occurrence of the tag word**, then rewrites that file to disk and updates its index entry.
+
+Rules:
+
+- **File must not already contain the tag** — if `#Tag` exists anywhere in the target file, it's left untouched.
+- **First occurrence only** — subsequent mentions in the same file are not modified.
+- **Word-boundary match** — `(?<=^|[^\p{L}\p{N}_#])Tag(?=[^\p{L}\p{N}_]|$)` case-insensitive, so `NIPS` or `snipping` won't match `NIP`.
+- **Minimum 3 characters** for propagation. Short tags like `#OR` are recognized locally but skipped during propagation to avoid mass false-positives.
+- **Source file is excluded** from propagation — we're tagging other files, not re-tagging the one that declared the tag.
+
+A single `tags:index-changed` broadcast is emitted after propagation finishes so the renderer refreshes once, not per file.
+
 ### Loading images in the renderer
 
 Images reference `vault_media/filename.ext` in markdown, but the renderer can't load `file://` URLs directly (cross-origin with the `http://localhost:5173` dev server, same-origin issues in production). A custom `vault-media://` protocol is registered in `src/main/index.ts`:
