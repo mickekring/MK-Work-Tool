@@ -8,6 +8,7 @@ import { historyService } from '../services/history-service'
 import { listModels, streamChat } from '../services/ollama-service'
 import type { ChatMessageSend } from '@shared/types/ai'
 import { migrateVaultAppDir } from '../services/settings-service'
+import { safeInsideVault, isSafeExternalUrl } from '../services/path-guard'
 
 export const MEDIA_FOLDER_NAME = 'vault_media'
 
@@ -150,19 +151,25 @@ export function registerIPCHandlers(): void {
     return result.canceled ? null : result.filePaths[0]
   })
 
-  // File handlers
+  // File handlers. Every path-taking handler routes the renderer-
+  // supplied path through `safeInsideVault`, which realpath-resolves
+  // it and rejects anything outside the currently-open vault root.
   ipcMain.handle('file:read', async (_, path: string) => {
-    return readFileSync(path, 'utf-8')
+    const safe = safeInsideVault(path)
+    if (!safe) throw new Error('file:read rejected: path outside vault')
+    return readFileSync(safe, 'utf-8')
   })
 
   ipcMain.handle('file:write', async (_, path: string, content: string) => {
+    const safe = safeInsideVault(path)
+    if (!safe) return false
     try {
-      writeFileSync(path, content, 'utf-8')
-      tagsService.updateFile(path, content)
-      const propagated = tagsService.propagateTags(path)
+      writeFileSync(safe, content, 'utf-8')
+      tagsService.updateFile(safe, content)
+      const propagated = tagsService.propagateTags(safe)
       if (propagated.length > 0) {
         console.log(
-          `tags: auto-tagged ${propagated.length} file(s) from ${path}`
+          `tags: auto-tagged ${propagated.length} file(s) from ${safe}`
         )
       }
       broadcastTagIndex()
@@ -173,10 +180,12 @@ export function registerIPCHandlers(): void {
   })
 
   ipcMain.handle('file:create', async (_, path: string, content = '') => {
+    const safe = safeInsideVault(path)
+    if (!safe) return false
     try {
-      writeFileSync(path, content, 'utf-8')
-      tagsService.updateFile(path, content)
-      tagsService.propagateTags(path)
+      writeFileSync(safe, content, 'utf-8')
+      tagsService.updateFile(safe, content)
+      tagsService.propagateTags(safe)
       broadcastTagIndex()
       return true
     } catch {
@@ -185,9 +194,11 @@ export function registerIPCHandlers(): void {
   })
 
   ipcMain.handle('file:delete', async (_, path: string) => {
+    const safe = safeInsideVault(path)
+    if (!safe) return false
     try {
-      unlinkSync(path)
-      tagsService.removeFile(path)
+      unlinkSync(safe)
+      tagsService.removeFile(safe)
       broadcastTagIndex()
       return true
     } catch {
@@ -196,9 +207,12 @@ export function registerIPCHandlers(): void {
   })
 
   ipcMain.handle('file:rename', async (_, oldPath: string, newPath: string) => {
+    const safeOld = safeInsideVault(oldPath)
+    const safeNew = safeInsideVault(newPath)
+    if (!safeOld || !safeNew) return false
     try {
-      renameSync(oldPath, newPath)
-      tagsService.renameFile(oldPath, newPath)
+      renameSync(safeOld, safeNew)
+      tagsService.renameFile(safeOld, safeNew)
       broadcastTagIndex()
       return true
     } catch {
@@ -207,20 +221,31 @@ export function registerIPCHandlers(): void {
   })
 
   ipcMain.handle('file:exists', async (_, path: string) => {
-    return existsSync(path)
+    const safe = safeInsideVault(path)
+    if (!safe) return false
+    return existsSync(safe)
   })
 
-  // Open an attachment with the OS default handler. Accepts either an
-  // absolute path or a vault-relative path (like "vault_media/foo.pdf").
+  // Open an attachment with the OS default handler. Accepts ONLY
+  // vault-relative paths (e.g. "vault_media/foo.pdf"). Absolute paths
+  // are rejected outright so a crafted markdown link like
+  // `[Docs](/Applications/Evil.app)` can't launch arbitrary apps.
   ipcMain.handle('attachment:open', async (_, target: string) => {
     try {
-      let absolute = target
-      if (!absolute.startsWith('/')) {
-        const vaultPath = mainStore.getState().settings.vaultPath
-        if (!vaultPath) return false
-        absolute = join(vaultPath, decodeURI(target))
+      // Reject absolute paths on any platform
+      if (
+        target.startsWith('/') ||
+        /^[a-zA-Z]:[/\\]/.test(target) ||
+        target.startsWith('\\\\')
+      ) {
+        return false
       }
-      const errorMsg = await shell.openPath(absolute)
+      const vaultPath = mainStore.getState().settings.vaultPath
+      if (!vaultPath) return false
+      const candidate = join(vaultPath, decodeURI(target))
+      const safe = safeInsideVault(candidate)
+      if (!safe) return false
+      const errorMsg = await shell.openPath(safe)
       return errorMsg === ''
     } catch (error) {
       console.error('Error opening attachment:', error)
@@ -229,10 +254,14 @@ export function registerIPCHandlers(): void {
   })
 
   ipcMain.handle('shell:open-external', async (_, url: string) => {
+    if (!isSafeExternalUrl(url)) return
     await shell.openExternal(url)
   })
 
-  // Attachment handler
+  // Attachment handler — copies an external source file into the
+  // vault's vault_media/ folder. Source path validation (reject
+  // symlinks, non-regular files, cross-platform basename) lives
+  // inside saveAttachmentToVault itself.
   ipcMain.handle('attachment:save', async (_, sourcePath: string) => {
     const vaultPath = mainStore.getState().settings.vaultPath
     if (!vaultPath) return null
@@ -249,8 +278,10 @@ export function registerIPCHandlers(): void {
 
   // Folder handlers
   ipcMain.handle('folder:create', async (_, path: string) => {
+    const safe = safeInsideVault(path)
+    if (!safe) return false
     try {
-      mkdirSync(path, { recursive: true })
+      mkdirSync(safe, { recursive: true })
       return true
     } catch {
       return false
@@ -258,8 +289,10 @@ export function registerIPCHandlers(): void {
   })
 
   ipcMain.handle('folder:delete', async (_, path: string) => {
+    const safe = safeInsideVault(path)
+    if (!safe) return false
     try {
-      rmdirSync(path, { recursive: true })
+      rmdirSync(safe, { recursive: true })
       return true
     } catch {
       return false
@@ -267,7 +300,9 @@ export function registerIPCHandlers(): void {
   })
 
   ipcMain.handle('folder:list', async (_, path: string) => {
-    return buildFileTree(path)
+    const safe = safeInsideVault(path)
+    if (!safe) return []
+    return buildFileTree(safe)
   })
 
   // Vault handlers
@@ -301,27 +336,34 @@ export function registerIPCHandlers(): void {
     return initVaultStructure(path)
   })
 
-  // History handlers
+  // History handlers — snapshot storage is *inside* the vault, so
+  // filePath must itself be vault-confined. snapshotId is a bare
+  // filename-safe string (validated by historyService).
   ipcMain.handle('history:list', async (_, filePath: string) => {
-    return historyService.list(filePath)
+    const safe = safeInsideVault(filePath)
+    if (!safe) return { filePath, snapshots: [] }
+    return historyService.list(safe)
   })
 
   ipcMain.handle('history:create-snapshot', async (_, filePath: string) => {
-    const meta = historyService.createSnapshot(filePath)
-    if (meta) broadcastHistoryChanged(filePath)
+    const safe = safeInsideVault(filePath)
+    if (!safe) return null
+    const meta = historyService.createSnapshot(safe)
+    if (meta) broadcastHistoryChanged(safe)
     return meta
   })
 
   ipcMain.handle(
     'history:restore',
     async (_, filePath: string, snapshotId: string) => {
-      const result = historyService.restore(filePath, snapshotId)
+      const safe = safeInsideVault(filePath)
+      if (!safe) return null
+      const result = historyService.restore(safe, snapshotId)
       if (result) {
-        // Re-index and propagate tags from the restored content
-        tagsService.updateFile(filePath, result.content)
-        tagsService.propagateTags(filePath)
+        tagsService.updateFile(safe, result.content)
+        tagsService.propagateTags(safe)
         broadcastTagIndex()
-        broadcastHistoryChanged(filePath)
+        broadcastHistoryChanged(safe)
       }
       return result
     }
@@ -330,8 +372,10 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(
     'history:delete-snapshot',
     async (_, filePath: string, snapshotId: string) => {
-      const ok = historyService.deleteSnapshot(filePath, snapshotId)
-      if (ok) broadcastHistoryChanged(filePath)
+      const safe = safeInsideVault(filePath)
+      if (!safe) return false
+      const ok = historyService.deleteSnapshot(safe, snapshotId)
+      if (ok) broadcastHistoryChanged(safe)
       return ok
     }
   )

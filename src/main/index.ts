@@ -1,9 +1,10 @@
 import { app, shell, BrowserWindow, protocol, net } from 'electron'
-import { join } from 'path'
+import { join, resolve, sep } from 'path'
 import { pathToFileURL } from 'url'
 import { registerIPCHandlers } from './ipc/handlers'
 import { mainStore } from './store'
 import { settingsService } from './services/settings-service'
+import { isSafeExternalUrl } from './services/path-guard'
 
 // Icon used for the BrowserWindow in dev. In packaged builds,
 // electron-builder uses build/icon.png to generate .icns/.ico.
@@ -82,8 +83,13 @@ function createWindow(): void {
     persistBounds()
   })
 
+  // Only forward http(s)/mailto to the default browser. Other schemes
+  // (file://, custom app schemes, javascript:, etc.) can be abused to
+  // launch unexpected applications or exfiltrate data.
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    if (isSafeExternalUrl(details.url)) {
+      shell.openExternal(details.url)
+    }
     return { action: 'deny' }
   })
 
@@ -126,14 +132,24 @@ app.whenReady().then(() => {
   // Resolve vault-media:// requests to files inside the current vault's
   // vault_media/ folder. The hostname is a placeholder (we always use
   // "local"); the actual relative path lives in url.pathname.
+  //
+  // SECURITY: percent-encoded `..` segments (e.g. "%2F..%2F..%2F") survive
+  // WHATWG URL normalization, so after decodeURIComponent we MUST
+  // re-resolve and verify the result is still inside vault_media/.
+  // Without this check, a crafted image URL in a markdown file can
+  // read any file on disk.
   protocol.handle('vault-media', (request) => {
     const vaultPath = mainStore.getState().settings.vaultPath
     if (!vaultPath) {
       return new Response('No vault open', { status: 404 })
     }
+    const mediaRoot = resolve(vaultPath, 'vault_media')
     const url = new URL(request.url)
     const relative = decodeURIComponent(url.pathname.replace(/^\//, ''))
-    const absolute = join(vaultPath, 'vault_media', relative)
+    const absolute = resolve(mediaRoot, relative)
+    if (absolute !== mediaRoot && !absolute.startsWith(mediaRoot + sep)) {
+      return new Response('Forbidden', { status: 403 })
+    }
     return net.fetch(pathToFileURL(absolute).toString())
   })
 
