@@ -12,6 +12,75 @@ import type {
   TagRelations
 } from '@shared/types/tags'
 import type { SearchHit, SearchResults } from '@shared/types/search'
+import { historyService } from './history-service'
+
+/**
+ * Byte ranges of a markdown document where tag propagation must NOT
+ * insert a `#`. Covers:
+ *  - YAML frontmatter at the very top (between leading `---` markers)
+ *  - Fenced code blocks (``` … ```)
+ *  - Inline code (`…`)
+ *  - Link destinations (`](…)`)
+ *  - Bare URLs (http(s)://…) and markdown autolinks <…>
+ *
+ * Why this matters: without these guards a single saved note with
+ * `#drop` or `#api` silently corrupts URLs, code, and frontmatter in
+ * every other note in the vault.
+ */
+function findProtectedRanges(content: string): Array<[number, number]> {
+  const ranges: Array<[number, number]> = []
+
+  // YAML frontmatter: --- at start of file, next --- on its own line
+  if (content.startsWith('---\n') || content.startsWith('---\r\n')) {
+    const closeIdx = content.indexOf('\n---', 3)
+    if (closeIdx > 0) {
+      ranges.push([0, closeIdx + 4])
+    }
+  }
+
+  // Fenced code blocks. Multiline flag; match up to the matching fence.
+  const fenceRegex = /^```[^\n]*\n[\s\S]*?^```/gm
+  let m: RegExpExecArray | null
+  while ((m = fenceRegex.exec(content)) !== null) {
+    ranges.push([m.index, m.index + m[0].length])
+  }
+
+  // Inline code — backtick pairs on the same line
+  const inlineCode = /`[^`\n]+`/g
+  while ((m = inlineCode.exec(content)) !== null) {
+    ranges.push([m.index, m.index + m[0].length])
+  }
+
+  // Markdown link destinations: `](...)`
+  const linkDest = /\]\([^)\n]*\)/g
+  while ((m = linkDest.exec(content)) !== null) {
+    ranges.push([m.index, m.index + m[0].length])
+  }
+
+  // Autolinks: <http://...>, <user@example.com>
+  const autolink = /<(?:https?:\/\/[^>\s]+|[^>\s@]+@[^>\s]+)>/g
+  while ((m = autolink.exec(content)) !== null) {
+    ranges.push([m.index, m.index + m[0].length])
+  }
+
+  // Bare URLs — match http(s)://… up to whitespace
+  const bareUrl = /\bhttps?:\/\/\S+/g
+  while ((m = bareUrl.exec(content)) !== null) {
+    ranges.push([m.index, m.index + m[0].length])
+  }
+
+  return ranges
+}
+
+function isInsideProtected(
+  pos: number,
+  ranges: Array<[number, number]>
+): boolean {
+  for (const [start, end] of ranges) {
+    if (pos >= start && pos < end) return true
+  }
+  return false
+}
 
 // #Tag recognition rules:
 // - Preceded by start-of-line or a non-word/non-hash character (avoids
@@ -216,24 +285,38 @@ export const tagsService = {
       const display = state.displayByTag.get(tagLower) ?? tagLower
       const alreadyTagged = new Set(state.filesByTag.get(tagLower) ?? [])
 
-      // Case-insensitive, unicode-aware, word-boundary match for the
-      // first un-hashed occurrence. Leading char must be start-of-input
-      // or something that's neither a word char nor a `#`.
+      // Case-insensitive, unicode-aware, word-boundary match. `g` flag
+      // so we can walk past matches that land inside protected ranges
+      // (code fences, inline code, link destinations, frontmatter, URLs).
       const pattern = new RegExp(
         `(?<=^|[^\\p{L}\\p{N}_#])(${escapeRegex(display)})(?=[^\\p{L}\\p{N}_]|$)`,
-        'iu'
+        'giu'
       )
 
       for (const [otherPath, content] of otherFiles) {
         if (alreadyTagged.has(otherPath)) continue
-        const match = pattern.exec(content)
-        if (!match) continue
 
-        const insertAt = match.index
+        const protectedRanges = findProtectedRanges(content)
+        pattern.lastIndex = 0
+        let match: RegExpExecArray | null = null
+        let found: RegExpExecArray | null = null
+        while ((match = pattern.exec(content)) !== null) {
+          if (!isInsideProtected(match.index, protectedRanges)) {
+            found = match
+            break
+          }
+        }
+        if (!found) continue
+
+        const insertAt = found.index
         const newContent =
           content.slice(0, insertAt) + '#' + content.slice(insertAt)
 
         try {
+          // Snapshot BEFORE we overwrite so the user can recover if
+          // propagation landed somewhere unexpected. createSnapshot
+          // reads from disk, so it captures the pre-propagation state.
+          historyService.createSnapshot(otherPath)
           writeFileSync(otherPath, newContent, 'utf-8')
           removeFileFromIndex(otherPath)
           addFileToIndex(otherPath, newContent)

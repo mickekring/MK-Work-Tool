@@ -1,6 +1,6 @@
 import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
-import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, renameSync, readdirSync, statSync, rmdirSync, copyFileSync } from 'fs'
-import { join, extname } from 'path'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, renameSync, readdirSync, statSync, lstatSync, rmdirSync, copyFileSync } from 'fs'
+import { join, extname, basename } from 'path'
 import type { FileNode, FontSize } from '@shared/types/store'
 import { mainStore } from '../store'
 import { tagsService } from '../services/tags-service'
@@ -69,22 +69,42 @@ function buildFileTree(
   return items
 }
 
-// Copy an external file into {vault}/vault_media/ with collision-safe naming.
-// Returns the relative path (for markdown insertion) and the final filename.
+// Copy an external file into {vault}/vault_media/ with collision-safe
+// naming. Returns the relative path (for markdown insertion) and the
+// final filename.
+//
+// SECURITY: the sourcePath comes from the renderer. We:
+//  - reject symlinks (lstat) so a dropped alias can't leak the target
+//  - require a regular file (no fifos, devices, etc.)
+//  - extract the filename via path.basename so Windows backslash
+//    separators don't smuggle an absolute destination through join()
 function saveAttachmentToVault(
   vaultPath: string,
   sourcePath: string
 ): { filename: string; relativePath: string } | null {
   try {
+    // lstatSync does NOT follow symlinks, so we can detect them.
+    const stat = lstatSync(sourcePath)
+    if (stat.isSymbolicLink()) {
+      console.warn('attachment:save refused symlink:', sourcePath)
+      return null
+    }
+    if (!stat.isFile()) {
+      console.warn('attachment:save refused non-regular file:', sourcePath)
+      return null
+    }
+
     const mediaDir = join(vaultPath, MEDIA_FOLDER_NAME)
     if (!existsSync(mediaDir)) {
       mkdirSync(mediaDir, { recursive: true })
     }
 
-    const ext = extname(sourcePath)
-    const base = sourcePath
-      .substring(sourcePath.lastIndexOf('/') + 1)
-      .slice(0, ext.length ? -ext.length : undefined)
+    // path.basename correctly handles both / and \ on Windows.
+    const originalName = basename(sourcePath)
+    const ext = extname(originalName)
+    const base = ext.length
+      ? originalName.slice(0, -ext.length)
+      : originalName
     let filename = `${base}${ext}`
     let destPath = join(mediaDir, filename)
     let counter = 1
