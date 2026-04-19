@@ -14,10 +14,14 @@ asarUnpack:
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    # Rune reads/writes files inside a user-chosen vault folder and
+    # copies dragged attachments. Documents/Downloads usage descriptions
+    # surface TCC prompts on first access. We do NOT use camera/mic,
+    # so those entitlements are intentionally omitted — fewer declared
+    # capabilities = less of an attack surface and smoother App Store
+    # review if that ever happens.
+    - NSDocumentsFolderUsageDescription: Rune reads and writes your markdown notes inside the vault folder you select.
+    - NSDownloadsFolderUsageDescription: Rune lets you drop files from Downloads into a note as attachments.
   notarize: false
   target:
     - target: dmg
@@ -46,6 +50,6 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
+# No publish provider configured. Auto-updates would require a real
+# update server URL AND properly-signed builds; enabling this with a
+# placeholder URL is a supply-chain hazard waiting to happen.

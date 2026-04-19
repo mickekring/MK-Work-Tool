@@ -53,9 +53,15 @@ function createWindow(): void {
     backgroundColor: '#0f0f0f',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      // Chromium OS-level sandbox for the renderer. Our preload only
+      // uses contextBridge, ipcRenderer, and webUtils — all
+      // sandbox-compatible — so this can stay on for an extra layer of
+      // renderer isolation beyond contextIsolation + nodeIntegration.
+      sandbox: true,
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // Block <webview> tags which bypass most renderer lockdown.
+      webviewTag: false
     }
   })
 
@@ -91,6 +97,28 @@ function createWindow(): void {
       shell.openExternal(details.url)
     }
     return { action: 'deny' }
+  })
+
+  // Block any top-level navigation away from the loaded bundle. If
+  // something in the renderer sets `location.href = 'https://evil'`
+  // we intercept and offload to the default browser instead.
+  // Same-origin SPA navigation (hash/route churn) is allowed.
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    try {
+      const current = mainWindow.webContents.getURL()
+      // The very first load happens before getURL() returns anything,
+      // so fall through (allow) when we haven't loaded the bundle yet.
+      if (!current) return
+      const currentOrigin = new URL(current).origin
+      const targetOrigin = new URL(url).origin
+      if (currentOrigin === targetOrigin) return
+    } catch {
+      // URL parsing failed — fall through to block.
+    }
+    event.preventDefault()
+    if (isSafeExternalUrl(url)) {
+      shell.openExternal(url)
+    }
   })
 
   // HMR for renderer based on electron-vite cli.

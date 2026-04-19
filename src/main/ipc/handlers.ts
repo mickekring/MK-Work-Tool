@@ -570,6 +570,10 @@ export function registerIPCHandlers(): void {
 
   // Track in-flight chat streams so users can cancel.
   const activeChats = new Map<string, AbortController>()
+  // Concurrency cap — prevents a rogue renderer (or a bug) from
+  // spamming Ollama with thousands of parallel chat requests,
+  // exhausting sockets, memory, or listener counts.
+  const MAX_CONCURRENT_CHATS = 5
 
   ipcMain.handle(
     'ai:chat-start',
@@ -579,9 +583,16 @@ export function registerIPCHandlers(): void {
       model: string,
       messages: ChatMessageSend[]
     ) => {
+      const senderWin = BrowserWindow.fromWebContents(event.sender)
+      if (activeChats.size >= MAX_CONCURRENT_CHATS) {
+        senderWin?.webContents.send('ai:chat-error', {
+          requestId,
+          message: 'Too many concurrent chat requests'
+        })
+        return
+      }
       const controller = new AbortController()
       activeChats.set(requestId, controller)
-      const senderWin = BrowserWindow.fromWebContents(event.sender)
       // Fire-and-forget — streamChat emits chunks via events.
       streamChat(
         model,
