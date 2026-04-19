@@ -152,3 +152,30 @@ function Component({ isVisible, ... }) {
   return <div>...</div>
 }
 ```
+
+---
+
+## 8. A packaged copy of Rune will silently block `npm run dev`
+
+**When**: Developing Rune after having installed the packaged `.app` via `npm run build:mac-arm`.
+
+**Mistake**: Spent a full debug session convinced that my security-hardening changes (sandbox, will-navigate, protocol rework) had broken the dev server. Every `npm run dev` reached "starting electron app…" and then exited cleanly with no error; the Electron process never showed up in `ps`. Rolled back change after change — all innocent. The actual cause: the packaged `/Applications/Rune.app` the user had launched earlier was still running, holding the single-instance lock in `src/main/index.ts`. Our own code (`if (!gotTheLock) app.quit()`) told every new dev-server Electron to exit immediately — cleanly, silently, no error.
+
+**Rule**: If `npm run dev` exits straight after "starting electron app…" and leaves no stderr, the very first thing to check is whether another Rune is already running:
+
+```bash
+ps aux | grep "Rune.app/Contents/MacOS/Rune" | grep -v grep
+```
+
+Not Electron from the dev tree — packaged Rune. Same bundle identifier → same single-instance lock → silent quit.
+
+**Fix**: Kill the packaged app first. If we want to make this obviously-diagnosable in the future, emit a visible log line from the `if (!gotTheLock)` branch of `src/main/index.ts`:
+
+```typescript
+if (!gotTheLock) {
+  console.error('Another instance of Rune is already running — quitting.')
+  app.quit()
+}
+```
+
+Second-order lesson: `./node_modules/.bin/electron ./out/main/index.js` run from a VS Code integrated terminal runs as **Node**, not Electron, because VS Code sets `ELECTRON_RUN_AS_NODE=1`. `require('electron')` then returns the *path string* to the binary, not the API, so `electron.protocol` is `undefined`. The `npm run dev` script unsets that variable for you; direct invocations need `unset ELECTRON_RUN_AS_NODE &&` prepended.

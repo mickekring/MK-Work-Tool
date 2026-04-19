@@ -214,8 +214,42 @@ The editor uses CodeMirror 6 with:
 
 ## Security
 
-- `contextIsolation: true` — renderer cannot access Node.js
-- `nodeIntegration: false` — no require() in renderer
-- `sandbox: false` — needed for preload file access
-- External links open in default browser (not in app)
-- Single instance lock prevents multiple app windows
+A full security audit ran in April 2026 (see `tasks/lessons.md`). The current posture:
+
+**Renderer isolation:**
+
+- `contextIsolation: true` — renderer runs in a separate JS world; cannot touch Node.
+- `nodeIntegration: false` — no `require()` in the renderer.
+- `sandbox: true` — Chromium OS-level sandbox for the renderer process.
+- `webviewTag: false` — `<webview>` blocked.
+
+**IPC bridge (`src/preload/index.ts`):**
+
+- Generic `invoke` / `on` still exists, but an **explicit allowlist** (`ALLOWED_INVOKE_CHANNELS`, `ALLOWED_EVENT_CHANNELS`) rejects any channel not in the list. A compromised renderer cannot reach an IPC channel we didn't intend to expose.
+
+**Path confinement (`src/main/services/path-guard.ts`):**
+
+- `assertInsideVault(p)` / `safeInsideVault(p)` — realpath-resolves a renderer-supplied path and rejects anything outside the current vault root. Applied to every `file:*`, `folder:*`, `attachment:*`, and `history:*` IPC handler.
+- `attachment:open` additionally rejects absolute paths outright (so crafted links like `[x](/Applications/Evil.app)` can't launch anything).
+
+**Custom protocol (`vault-media://`):**
+
+- Re-resolves the decoded path against `{vault}/vault_media/` and returns `403 Forbidden` if the result escapes — defeats percent-encoded `..` traversal (e.g. `%2F..%2F..%2Fetc%2Fpasswd`).
+
+**URL handling:**
+
+- `isSafeExternalUrl` allowlists `http:`, `https:`, `mailto:` only. Used by `shell:open-external`, the window-open handler, and the `will-navigate` guard.
+
+**Tag propagation:**
+
+- `propagateTags()` detects protected byte-ranges (YAML frontmatter, fenced code, inline code, link destinations, autolinks, bare URLs) and skips matches inside them. Takes a history snapshot of every target file before writing, so restore is always available.
+
+**Dependency hygiene:**
+
+- `npm audit` = 0 vulnerabilities (876 resolved packages).
+- No unexpected postinstall scripts.
+- Unused deps removed (`clsx`, `chokidar`, `date-fns`, `@electron-toolkit/utils`, `@electron-toolkit/preload`).
+
+**Single-instance lock** prevents multiple app windows (side-effect caveat: a packaged Rune.app running can silently block `npm run dev` from starting a second instance).
+
+**External links** open in the default browser, never in-app.
