@@ -159,19 +159,51 @@ export function TagConstellation({
     }
   }, [graph, focusTag])
 
+  // Precompute, for focus mode only, how many notes each neighbor
+  // shares with the focus tag. Drives both node size and layout so
+  // "bigger + closer = stronger relation" is the unambiguous reading.
+  const sharedWithFocus = useMemo(() => {
+    const map = new Map<string, number>()
+    if (!focusTag || !graph) return map
+    for (const e of graph.edges) {
+      if (e.source === focusTag) map.set(e.target, e.weight)
+      else if (e.target === focusTag) map.set(e.source, e.weight)
+    }
+    return map
+  }, [focusTag, graph])
+
   // Build / rebuild force simulation whenever the visible subgraph
   // changes. We reset positions each time so filter transitions look
   // intentional — focus node lands at center, neighbors settle around.
   useEffect(() => {
     if (!visibleGraph) return
 
+    const maxShared = focusTag
+      ? Math.max(1, ...Array.from(sharedWithFocus.values()))
+      : 1
+
     const nodes: Node[] = visibleGraph.nodes.map((n) => {
       const isFocus = n.tag === focusTag
+      // Size rule:
+      //  - overview mode: node size reflects vault-wide popularity
+      //  - focus mode, focus tag: size by its own count (big anchor)
+      //  - focus mode, neighbor: size by SHARED count with the focus
+      //    so "big = strongly related to the focus", not "big =
+      //    generally popular in the vault".
+      let radius: number
+      if (!focusTag) {
+        radius = 10 + Math.log2(1 + n.count) * 6
+      } else if (isFocus) {
+        radius = 14 + Math.log2(1 + n.count) * 6
+      } else {
+        const shared = sharedWithFocus.get(n.tag) ?? 1
+        radius = 10 + Math.log2(1 + shared) * 10
+      }
       return {
         id: n.tag,
         tag: n.tag,
         count: n.count,
-        radius: 10 + Math.log2(1 + n.count) * 6,
+        radius,
         x: isFocus
           ? VIEW_W / 2
           : VIEW_W / 2 + (Math.random() - 0.5) * 300,
@@ -197,15 +229,32 @@ export function TagConstellation({
         'link',
         forceLink<Node, Link>(links)
           .id((d) => d.id)
-          // Heavier (more shared notes) = shorter link = tighter cluster
-          .distance((l) => 140 - Math.min(100, l.weight * 7))
-          .strength((l) => 0.06 + Math.min(0.5, l.weight * 0.05))
+          // Distance rule amplified in focus mode: weight 1 edges are
+          // much longer than weight 3 edges, so the weakest relations
+          // visibly drift outward and can't hide behind strong ones.
+          .distance((l) => {
+            if (focusTag) {
+              const ratio = l.weight / maxShared
+              return 260 - ratio * 170 // 90 (strongest) → 260 (weakest)
+            }
+            return 140 - Math.min(100, l.weight * 7)
+          })
+          .strength((l) => {
+            if (focusTag) {
+              const ratio = l.weight / maxShared
+              return 0.1 + ratio * 0.5
+            }
+            return 0.06 + Math.min(0.5, l.weight * 0.05)
+          })
       )
-      .force('charge', forceManyBody().strength(focusTag ? -420 : -220))
+      // Stronger repulsion in focus mode so the cluster breathes.
+      .force('charge', forceManyBody().strength(focusTag ? -900 : -220))
       .force('center', forceCenter(VIEW_W / 2, VIEW_H / 2).strength(0.04))
       .force(
         'collide',
-        forceCollide<Node>().radius((d) => d.radius + 6).iterations(2)
+        forceCollide<Node>()
+          .radius((d) => d.radius + (focusTag ? 14 : 6))
+          .iterations(3)
       )
       .alpha(1)
       .alphaDecay(0.03)
@@ -328,7 +377,6 @@ export function TagConstellation({
   const totalTags = graph?.nodes.length ?? 0
   const totalConnections = graph?.edges.length ?? 0
   const shownTags = visibleGraph?.nodes.length ?? 0
-  const shownConnections = visibleGraph?.edges.length ?? 0
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch">
@@ -546,7 +594,9 @@ export function TagConstellation({
                           fontSize={10}
                           style={{ userSelect: 'none', pointerEvents: 'none' }}
                         >
-                          {n.count}
+                          {focusTag && !isFocus
+                            ? `${sharedWithFocus.get(n.id) ?? 0} · ${n.count}`
+                            : n.count}
                         </text>
                       </g>
                     )
@@ -556,18 +606,26 @@ export function TagConstellation({
             )}
           </div>
 
-          <div className="px-4 py-1.5 border-t border-border-subtle text-[11px] text-muted-foreground flex items-center justify-between bg-[var(--color-background)]">
+          <div className="px-4 py-1.5 border-t border-border-subtle text-[11px] text-muted-foreground flex items-center justify-between gap-4 bg-[var(--color-background)]">
             <span>
               {focusTag
                 ? 'Click any tag to re-focus · Esc clears the filter'
                 : 'Type to focus on a tag · scroll to pan · ⌘-scroll to zoom · drag to arrange'}
             </span>
-            {focusTag && (
-              <span>
-                {shownConnections} shared{' '}
-                {shownConnections === 1 ? 'link' : 'links'} in this neighborhood
-              </span>
-            )}
+            <span className="whitespace-nowrap">
+              {focusTag ? (
+                <>
+                  Size + proximity ={' '}
+                  <span className="text-foreground/80">shared notes with #{focusTag}</span>
+                  {' · '}
+                  labels show <span className="font-mono">shared · total</span>
+                </>
+              ) : (
+                <>
+                  Size = notes per tag · line thickness = shared notes
+                </>
+              )}
+            </span>
           </div>
         </div>
 
