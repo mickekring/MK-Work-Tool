@@ -12,6 +12,7 @@ import { RightSidebar } from './RightSidebar'
 import { StatusBar } from './StatusBar'
 import { ResizeHandle } from './ResizeHandle'
 import { SettingsModal } from '../modals/SettingsModal'
+import { TagConstellation } from '../modals/TagConstellation'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -78,6 +79,24 @@ export function AppLayout({
   const history = useFileHistory(selectedFile ?? null)
   const [showSettings, setShowSettings] = useState(false)
   const openSettings = useCallback(() => setShowSettings(true), [])
+  const [showConstellation, setShowConstellation] = useState(false)
+  const openConstellation = useCallback(() => setShowConstellation(true), [])
+
+  // Global shortcut: ⌘⇧G / Ctrl+Shift+G opens the tag constellation.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent): void => {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.shiftKey &&
+        e.key.toLowerCase() === 'g'
+      ) {
+        e.preventDefault()
+        setShowConstellation(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   // AI chat — model list + per-file chat session
   const { models: ollamaModels, error: ollamaError } = useOllamaModels()
@@ -186,6 +205,7 @@ export function AppLayout({
           expandedFolders={ui.expandedFolders}
           onToggleFolderExpanded={toggleFolderExpanded}
           onOpenSettings={openSettings}
+          onOpenConstellation={openConstellation}
         />
 
         {/* Left resize handle */}
@@ -275,6 +295,12 @@ export function AppLayout({
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
+      />
+
+      <TagConstellation
+        isOpen={showConstellation}
+        onClose={() => setShowConstellation(false)}
+        onOpenFile={(path) => onFileSelect?.(path)}
       />
     </div>
   )

@@ -1,5 +1,5 @@
 import type { AppSettings, UIState, FileNode } from './store'
-import type { FileRelations, TagIndexSnapshot } from './tags'
+import type { FileRelations, TagIndexSnapshot, TagGraph } from './tags'
 import type { FileHistory, SnapshotMeta } from './history'
 import type {
   OllamaModel,
@@ -128,6 +128,10 @@ export interface TagChannels {
   'tags:rescan': {
     args: []
     result: TagIndexSnapshot
+  }
+  'tags:get-graph': {
+    args: []
+    result: TagGraph
   }
 }
 

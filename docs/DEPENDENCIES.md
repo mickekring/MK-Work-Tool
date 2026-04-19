@@ -30,6 +30,7 @@
 | clsx | ^2.1.0 | 2.1.1 | Conditional classnames |
 | react-markdown | ^10.1.0 | 10.1.0 | Markdown rendering in AI chat bubbles |
 | remark-gfm | ^4.0.1 | 4.0.1 | GFM extensions (tables, strikethrough) for react-markdown |
+| d3-force | ^3.0.0 | 3.0.0 | Force-directed layout for the Tag Constellation |
 
 ## Dev Dependencies
 

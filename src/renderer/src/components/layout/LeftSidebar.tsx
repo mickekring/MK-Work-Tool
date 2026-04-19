@@ -23,6 +23,7 @@ interface LeftSidebarProps {
   expandedFolders?: string[]
   onToggleFolderExpanded?: (folderId: string) => void
   onOpenSettings?: () => void
+  onOpenConstellation?: () => void
 }
 
 interface ContextMenuState {
@@ -48,7 +49,8 @@ export function LeftSidebar({
   selectedFile,
   expandedFolders,
   onToggleFolderExpanded,
-  onOpenSettings
+  onOpenSettings,
+  onOpenConstellation
 }: LeftSidebarProps) {
   const [showFolderModal, setShowFolderModal] = useState(false)
   const [folderModalTarget, setFolderModalTarget] = useState<string | null>(null)
@@ -254,6 +256,31 @@ export function LeftSidebar({
               >
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
+            <button
+              className="p-1 rounded hover:bg-sidebar-hover text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+              onClick={onOpenConstellation}
+              title="Tag Constellation (⌘⇧G)"
+              aria-label="Tag Constellation"
+            >
+              {/* Constellation: three linked nodes */}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="5" cy="7" r="2" />
+                <circle cx="19" cy="8" r="2" />
+                <circle cx="12" cy="18" r="2" />
+                <line x1="7" y1="7.5" x2="17" y2="8" />
+                <line x1="6" y1="9" x2="11" y2="16.5" />
+                <line x1="18" y1="10" x2="13" y2="16.5" />
               </svg>
             </button>
             <button

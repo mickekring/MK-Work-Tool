@@ -9,7 +9,10 @@ import { join } from 'path'
 import type {
   FileRelations,
   TagIndexSnapshot,
-  TagRelations
+  TagRelations,
+  TagGraph,
+  TagGraphNode,
+  TagGraphEdge
 } from '@shared/types/tags'
 import type { SearchHit, SearchResults } from '@shared/types/search'
 import { historyService } from './history-service'
@@ -384,6 +387,58 @@ export const tagsService = {
 
     tags.sort((a, b) => a.tag.localeCompare(b.tag))
     return { filePath, tags }
+  },
+
+  /**
+   * Build a tag co-occurrence graph for the vault.
+   *
+   * Nodes are tags; node weight is the number of notes declaring
+   * that tag. Two nodes are connected when both tags appear in the
+   * same note; edge weight counts how many shared notes.
+   *
+   * Derived entirely from the existing tagsByFile index — no extra
+   * filesystem work.
+   */
+  getTagGraph(): TagGraph {
+    const nodes: TagGraphNode[] = []
+    for (const [tagLower, files] of state.filesByTag) {
+      const display = state.displayByTag.get(tagLower) ?? tagLower
+      nodes.push({ tag: display, count: files.size })
+    }
+
+    // Walk every file's tag set — each co-occurring pair contributes
+    // 1 to the edge weight. Use a canonicalised "a|b" key so we don't
+    // double-count (a,b) and (b,a).
+    const edgeWeights = new Map<string, number>()
+    for (const tags of state.tagsByFile.values()) {
+      if (tags.size < 2) continue
+      const arr = Array.from(tags).sort()
+      for (let i = 0; i < arr.length; i += 1) {
+        for (let j = i + 1; j < arr.length; j += 1) {
+          const key = `${arr[i]}|${arr[j]}`
+          edgeWeights.set(key, (edgeWeights.get(key) ?? 0) + 1)
+        }
+      }
+    }
+
+    const edges: TagGraphEdge[] = []
+    for (const [key, weight] of edgeWeights) {
+      const [a, b] = key.split('|')
+      const displayA = state.displayByTag.get(a) ?? a
+      const displayB = state.displayByTag.get(b) ?? b
+      edges.push({ source: displayA, target: displayB, weight })
+    }
+
+    // Sort for stable rendering (layout is deterministic given input
+    // order under d3-force's seedable RNG)
+    nodes.sort((a, b) => a.tag.localeCompare(b.tag))
+    edges.sort((a, b) => {
+      const k1 = a.source + '|' + a.target
+      const k2 = b.source + '|' + b.target
+      return k1.localeCompare(k2)
+    })
+
+    return { nodes, edges }
   },
 
   /**

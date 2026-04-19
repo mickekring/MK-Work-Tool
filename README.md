@@ -31,6 +31,14 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
 - **Collapsible right-sidebar sections** — Document Info (stats),
   Relations, and History each have a section heading with its own
   chevron. Toggle state persists globally across files and restarts.
+- **Tag Constellation** — press **⌘⇧G** (or click the constellation
+  icon in the sidebar header) to see every tag in your vault as a
+  force-directed graph. Circles sized by how many notes carry each
+  tag, lines between tags that co-occur in at least one note,
+  thickness proportional to how many notes they share. Click a tag
+  to see its notes in a side drawer; click a note to jump to it.
+  Useful for spotting clusters of recurring themes and orphan tags
+  that would benefit from more cross-linking.
 - **Per-file history snapshots** — manual "Save snapshot" creates a
   point-in-time copy of the current file. The History panel lists up
   to 10 snapshots with timestamps, a restore button, and a delete

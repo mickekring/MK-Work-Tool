@@ -20,3 +20,23 @@ export interface TagIndexSnapshot {
   // For each tag, list of files that declare it explicitly
   filesByTag: Record<string, string[]>
 }
+
+// Node in the tag co-occurrence graph — one per unique tag.
+export interface TagGraphNode {
+  tag: string
+  /** Number of notes that declare this tag. Drives node size. */
+  count: number
+}
+
+// Edge: two tags that appear together in at least one note.
+export interface TagGraphEdge {
+  source: string
+  target: string
+  /** Number of notes that declare BOTH endpoint tags. Drives thickness. */
+  weight: number
+}
+
+export interface TagGraph {
+  nodes: TagGraphNode[]
+  edges: TagGraphEdge[]
+}

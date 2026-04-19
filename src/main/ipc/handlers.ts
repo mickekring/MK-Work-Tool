@@ -416,6 +416,10 @@ export function registerIPCHandlers(): void {
     }
   )
 
+  ipcMain.handle('tags:get-graph', async () => {
+    return tagsService.getTagGraph()
+  })
+
   ipcMain.handle('tags:rescan', async () => {
     const vaultPath = mainStore.getState().settings.vaultPath
     if (vaultPath) {
