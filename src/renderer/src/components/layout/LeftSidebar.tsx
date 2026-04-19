@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { FileNode } from '@shared/types/store'
 import { InputModal } from '../modals/InputModal'
 import { ConfirmModal } from '../modals/ConfirmModal'
 import { ContextMenu, type ContextMenuItem } from '../ui/ContextMenu'
+import { SearchPanel } from './SearchPanel'
 
 interface LeftSidebarProps {
   width: number
@@ -56,6 +57,19 @@ export function LeftSidebar({
   const [deleteModal, setDeleteModal] = useState<{ node: FileNode; isOpen: boolean } | null>(null)
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  // Cmd/Ctrl+K anywhere in the app opens search.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const handleCreateFolder = (name: string) => {
     if (vaultPath && onNewFolder) {
@@ -214,14 +228,36 @@ export function LeftSidebar({
       >
         {/* Traffic light spacer + vault header */}
         <div className="pt-[52px] px-4 pb-3 titlebar-drag-region">
-          <div className="titlebar-no-drag flex items-center justify-between">
+          <div className="titlebar-no-drag flex items-center justify-between gap-2">
             {vaultName ? (
-              <h1 className="text-sm font-semibold text-foreground truncate">{vaultName}</h1>
+              <h1 className="text-sm font-semibold text-foreground truncate flex-1 min-w-0">
+                {vaultName}
+              </h1>
             ) : (
-              <span className="text-sm text-muted-foreground">No vault</span>
+              <span className="text-sm text-muted-foreground flex-1 min-w-0">No vault</span>
             )}
             <button
-              className="p-1 rounded hover:bg-sidebar-hover text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1 rounded hover:bg-sidebar-hover text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+              onClick={() => setSearchOpen(true)}
+              title="Search (⌘K)"
+              aria-label="Search"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
+            <button
+              className="p-1 rounded hover:bg-sidebar-hover text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
               onClick={onOpenSettings}
               title="Settings"
             >
@@ -245,7 +281,17 @@ export function LeftSidebar({
         {/* Divider */}
         <div className="h-px bg-border-subtle mx-3" />
 
-        {/* File tree area */}
+        {/* Search panel takes over the content area when open. */}
+        {searchOpen ? (
+          <div className="flex-1 min-h-0">
+            <SearchPanel
+              onClose={() => setSearchOpen(false)}
+              onOpenFile={(path) => {
+                onFileSelect?.(path)
+              }}
+            />
+          </div>
+        ) : (
         <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
           {fileTree.length === 0 ? (
             <div className="px-4 py-8 text-center">
@@ -300,6 +346,7 @@ export function LeftSidebar({
             </>
           )}
         </div>
+        )}
 
         {/* Bottom actions */}
         <div className="p-2 border-t border-border-subtle flex gap-2">

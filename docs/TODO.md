@@ -74,6 +74,7 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Two top-level collapsible right-sidebar sections — Document Info (default collapsed) + Relations (default expanded); globally-remembered state via `store:set-section-expanded`
 - [x] Tag regex excludes pure-digit tokens — hex colors like `#000000` no longer register as tags
 - [x] Per-file manual history snapshots (max 10, pruned on overflow) with Save / Restore / Delete UI in a new right-sidebar History section; snapshots stored at `{vault}/.rune/history/{path}/{id}.md`
+- [x] Full-text search across vault — magnifying-glass icon in sidebar header + ⌘K shortcut opens an in-sidebar search panel with Filenames / Matches groups, highlighted snippets, click-to-open. Reuses the tag service's content cache so each keystroke is an in-memory lookup.
 - [x] Fix LeftSidebar hook-order crash when collapsing (rules of hooks violation — guard between hooks)
 - [x] Local AI chat via Ollama — new AI Chat section in the right sidebar streams responses from a local Ollama model; system prompt injects the current document via `{{document}}`; model + prompt editable in Settings → AI; cancel / clear / error-handled
 - [x] Markdown rendering in chat bubbles via react-markdown + remark-gfm (bold, italic, lists, code, tables, etc.)
@@ -82,7 +83,6 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 ## Future Enhancements
 
 - [ ] GFM table rendering (replace raw `|` pipe text with proper table layout via widget decorations)
-- [ ] Search across vault
 - [ ] Tags and metadata
 - [ ] Backlinks / wiki-style linking
 - [ ] Templates for folders

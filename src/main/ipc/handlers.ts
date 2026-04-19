@@ -345,6 +345,13 @@ export function registerIPCHandlers(): void {
     return tagsService.getRelations(filePath)
   })
 
+  ipcMain.handle(
+    'search:query',
+    async (_, query: string, limit: number) => {
+      return tagsService.search(query, limit)
+    }
+  )
+
   ipcMain.handle('tags:rescan', async () => {
     const vaultPath = mainStore.getState().settings.vaultPath
     if (vaultPath) {

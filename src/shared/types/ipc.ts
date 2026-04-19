@@ -8,6 +8,7 @@ import type {
   ChatDone,
   ChatError
 } from './ai'
+import type { SearchResults } from './search'
 
 // IPC Channel definitions for type-safe communication
 
@@ -63,6 +64,14 @@ export interface AttachmentChannels {
   'shell:open-external': {
     args: [url: string]
     result: void
+  }
+}
+
+// Full-text search channels
+export interface SearchChannels {
+  'search:query': {
+    args: [query: string, limit: number]
+    result: SearchResults
   }
 }
 
@@ -215,7 +224,8 @@ export type IPCChannels = DialogChannels &
   StoreChannels &
   TagChannels &
   HistoryChannels &
-  AIChannels
+  AIChannels &
+  SearchChannels
 
 // Helper type to extract channel names
 export type IPCChannelName = keyof IPCChannels

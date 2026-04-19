@@ -17,6 +17,11 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
 - **Drag-and-drop attachments** — drop any file onto a note; images
   render inline, other files become Cmd/Ctrl-click-openable links. All
   attachments are copied into a `vault_media/` folder inside your vault.
+- **Full-text search** — click the magnifying glass in the left
+  sidebar header (or press **⌘K** / **Ctrl+K**) to search across every
+  note in the vault. Results are grouped into "Filenames" and
+  "Matches" with highlighted snippets. Click a result to open the
+  note.
 - **Hashtag-based linking + auto-tagging** — write `#Topic` anywhere and
   the app tags every other note in the vault that mentions "Topic" as
   plain text (first untagged occurrence, word-boundary, case-insensitive,

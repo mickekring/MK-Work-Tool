@@ -11,6 +11,7 @@ import type {
   TagIndexSnapshot,
   TagRelations
 } from '@shared/types/tags'
+import type { SearchHit, SearchResults } from '@shared/types/search'
 
 // #Tag recognition rules:
 // - Preceded by start-of-line or a non-word/non-hash character (avoids
@@ -300,6 +301,84 @@ export const tagsService = {
 
     tags.sort((a, b) => a.tag.localeCompare(b.tag))
     return { filePath, tags }
+  },
+
+  /**
+   * Case-insensitive substring search over the vault. Reuses the
+   * content cache populated by scanVault/updateFile so we don't hit
+   * the filesystem per keystroke.
+   *
+   * Filename matches come first (a file in that group won't appear
+   * again in the content group, even if its content also matches).
+   */
+  search(query: string, limit: number): SearchResults {
+    const result: SearchResults = {
+      query,
+      filenameHits: [],
+      contentHits: [],
+      totalContentMatches: 0
+    }
+    const q = query.trim()
+    if (!q) return result
+
+    const qLower = q.toLowerCase()
+    const qLen = q.length
+    const vaultPath = state.vaultPath ?? ''
+
+    const makeRelative = (p: string): string =>
+      vaultPath && p.startsWith(vaultPath + '/')
+        ? p.slice(vaultPath.length + 1)
+        : p
+
+    const byFilename: SearchHit[] = []
+    const byContent: SearchHit[] = []
+
+    for (const [filePath, content] of state.contentByFile) {
+      // Filename check first — stem only, no extension, case-insensitive
+      const base = filePath.substring(filePath.lastIndexOf('/') + 1)
+      if (base.toLowerCase().includes(qLower)) {
+        byFilename.push({
+          filePath,
+          relativePath: makeRelative(filePath)
+        })
+        continue
+      }
+
+      // Content check
+      const idx = content.toLowerCase().indexOf(qLower)
+      if (idx < 0) continue
+      result.totalContentMatches += 1
+      if (byContent.length >= limit) continue
+
+      // Extract snippet around the match: ~40 chars before, ~60 after
+      const start = Math.max(0, idx - 40)
+      const end = Math.min(content.length, idx + qLen + 60)
+      let snippet = content.slice(start, end).replace(/\s+/g, ' ').trim()
+      let snippetOffset = idx - start
+      if (start > 0) {
+        snippet = '… ' + snippet
+        snippetOffset += 2
+      }
+      if (end < content.length) {
+        snippet = snippet + ' …'
+      }
+
+      byContent.push({
+        filePath,
+        relativePath: makeRelative(filePath),
+        snippet,
+        snippetOffset,
+        matchLength: qLen
+      })
+    }
+
+    // Sort filename hits by relative path — shorter/higher-up paths first
+    byFilename.sort((a, b) => a.relativePath.localeCompare(b.relativePath))
+    byContent.sort((a, b) => a.relativePath.localeCompare(b.relativePath))
+
+    result.filenameHits = byFilename.slice(0, limit)
+    result.contentHits = byContent
+    return result
   }
 }
 
