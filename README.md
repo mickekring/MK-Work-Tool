@@ -83,8 +83,8 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
 
 ```bash
 # Clone and install
-git clone https://github.com/mickekring/MK-Work-Tool.git
-cd MK-Work-Tool
+git clone https://github.com/mickekring/Rune.git
+cd Rune
 npm install
 
 # Run in dev mode (HMR for the renderer)
