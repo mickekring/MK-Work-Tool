@@ -11,6 +11,9 @@ import { hideMarkdownMarks } from './markHiding'
 import { inlineImages } from './inlineImages'
 import { linkClicks, imageWidgetClicks } from './linkClicks'
 import { tagHighlight } from './tagHighlight'
+import { taskList } from './taskList'
+import { tableStyling } from './tableStyling'
+import { markdownShortcuts } from './markdownShortcuts'
 
 export interface UseCodeMirrorOptions {
   initialValue?: string
@@ -83,8 +86,9 @@ export function useCodeMirror({
       placeholder(placeholderText),
       EditorView.lineWrapping,
 
-      // Keymaps
+      // Keymaps (custom shortcuts first so they win over defaults)
       keymap.of([
+        ...markdownShortcuts,
         ...defaultKeymap,
         ...historyKeymap,
         ...closeBracketsKeymap,
@@ -108,6 +112,12 @@ export function useCodeMirror({
 
       // Highlight #tag tokens (outside headings) as clickable links
       tagHighlight,
+
+      // Interactive [ ] / [x] task-list checkboxes
+      taskList,
+
+      // GFM pipe-table styling (monospaced columns, dimmed delimiters)
+      tableStyling,
 
       // Cmd/Ctrl-click opens links + inline images
       linkClicks,

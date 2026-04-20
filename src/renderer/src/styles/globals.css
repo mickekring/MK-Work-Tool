@@ -288,6 +288,64 @@ body {
   display: block;
 }
 
+/* Task list checkbox widget — replaces literal [ ] / [x] in the editor */
+.cm-task-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.18em;
+  margin: 0 0.35em 0 0;
+  border: 1.5px solid color-mix(in srgb, var(--color-muted-foreground) 70%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: background var(--transition-fast) ease, border-color var(--transition-fast) ease;
+}
+
+.cm-task-checkbox:hover {
+  border-color: var(--color-primary);
+}
+
+.cm-task-checkbox:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.cm-task-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 0.28em;
+  height: 0.55em;
+  border: solid var(--color-background);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -55%) rotate(45deg);
+}
+
+/* GFM pipe-table rendering — monospaced columns with dimmed pipes */
+.cm-table-row {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  white-space: pre;
+}
+
+.cm-table-row.cm-table-header {
+  font-weight: 700;
+}
+
+.cm-table-row.cm-table-delim {
+  color: var(--color-muted-foreground);
+  opacity: 0.65;
+}
+
+.cm-table-pipe {
+  color: var(--color-muted-foreground);
+  opacity: 0.5;
+}
+
 /* Editor drop target highlight when dragging a file over the editor */
 .editor-drop-target {
   outline: 2px dashed var(--color-primary);

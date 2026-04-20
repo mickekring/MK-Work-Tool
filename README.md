@@ -14,6 +14,12 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
 - **Live markdown preview** — headings, bold, italic, links, and inline
   images render as you type. The raw `#`, `**`, `[…](…)` marks hide on
   inactive lines and reappear when you click in to edit, like Obsidian.
+- **Task lists & tables** — GFM `- [ ]` / `- [x]` render as clickable
+  checkboxes; pipe tables get monospaced columns with dimmed delimiters
+  so they read as tables while staying plain-text editable.
+- **Markdown shortcuts** — **⌘B** toggles bold, **⌘I** toggles italic
+  around the selection (wraps, unwraps, or inserts an empty pair at the
+  caret).
 - **Drag-and-drop attachments** — drop any file onto a note; images
   render inline, other files become Cmd/Ctrl-click-openable links. All
   attachments are copied into a `vault_media/` folder inside your vault.

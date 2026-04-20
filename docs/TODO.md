@@ -85,6 +85,9 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Markdown rendering in chat bubbles via react-markdown + remark-gfm (bold, italic, lists, code, tables, etc.)
 - [x] Right sidebar font-size audit — replaced pixel literals (`text-[10px]`, `text-[11px]`) with rem-based Tailwind classes so the Settings → Appearance font-size scales the whole sidebar consistently. Primary content (chat messages, file lists, snapshot rows, "Save snapshot" button) bumped from `text-xs` to `text-sm` for readability.
 - [x] Reorderable right-sidebar sections — each section (Document Info, Relations, History, AI Chat) now has a drag handle in its header; drop onto another section to insert before it. Order persists globally in `ui-state.json` via a new `store:set-section-order` IPC channel. Implementation uses HTML5 DnD with a ref-backed drag source, `dataTransfer` payload, and a delegated drop handler on the scroll container so drops land reliably even when the cursor is over a nested element.
+- [x] Interactive task-list checkboxes — GFM `- [ ]` / `- [x]` render as real checkboxes via a CodeMirror widget (`src/renderer/src/editor/taskList.ts`). Clicking toggles the marker in the source. Raw markdown returns when the caret is on the line, matching Obsidian's live-preview.
+- [x] GFM pipe-table styling — table rows get monospaced columns and dimmed pipe delimiters so tables read as tables in the editor (`src/renderer/src/editor/tableStyling.ts`). Fully editable, no widget replacement.
+- [x] Markdown keyboard shortcuts — `Cmd+B` toggles `**bold**`, `Cmd+I` toggles `_italic_` around the selection (wraps / unwraps / inserts empty pair at caret). Lives in `src/renderer/src/editor/markdownShortcuts.ts`.
 
 ## Future Enhancements
 
