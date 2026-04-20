@@ -40,6 +40,7 @@ const ALLOWED_INVOKE_CHANNELS = new Set<string>([
   'store:toggle-folder-expanded',
   'store:toggle-relation-expanded',
   'store:set-section-expanded',
+  'store:set-section-order',
   'store:set-ai-model',
   'store:set-ai-system-prompt',
   // Tags

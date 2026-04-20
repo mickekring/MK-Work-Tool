@@ -60,6 +60,10 @@ export interface UIState {
   // sections, keyed by section id. Absence of a key means the section
   // uses its own default.
   sectionsExpanded: Record<string, boolean>
+  // User-chosen order of top-level right-sidebar sections. Unknown
+  // section ids (e.g. sections added in a later version) are appended
+  // to the end in their declaration order by the renderer.
+  sectionOrder: string[]
 }
 
 export interface EditorState {
@@ -95,6 +99,7 @@ export interface MainStore {
   toggleFolderExpanded: (folderId: string) => void
   toggleRelationExpanded: (filePath: string, tag: string) => void
   setSectionExpanded: (sectionId: string, expanded: boolean) => void
+  setSectionOrder: (order: string[]) => void
   setFileTree: (tree: FileNode[]) => void
   openFile: (path: string, content: string) => void
   updateEditorContent: (content: string) => void
@@ -130,7 +135,8 @@ export const defaultUIState: UIState = {
   lastOpenedFile: null,
   expandedFolders: [],
   expandedRelations: {},
-  sectionsExpanded: {}
+  sectionsExpanded: {},
+  sectionOrder: []
 }
 
 export const defaultEditorState: EditorState = {

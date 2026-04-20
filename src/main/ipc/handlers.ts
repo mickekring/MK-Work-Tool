@@ -536,6 +536,19 @@ export function registerIPCHandlers(): void {
     }
   )
 
+  ipcMain.handle(
+    'store:set-section-order',
+    async (_, order: string[]) => {
+      mainStore.getState().setSectionOrder(order)
+      const sectionOrder = mainStore.getState().ui.sectionOrder
+      BrowserWindow.getAllWindows().forEach((win) => {
+        win.webContents.send('store:state-changed', {
+          ui: { sectionOrder }
+        })
+      })
+    }
+  )
+
   ipcMain.handle('store:set-accent-color', async (_, color: string) => {
     mainStore.getState().setAccentColor(color)
     // Notify all windows of the accent color change

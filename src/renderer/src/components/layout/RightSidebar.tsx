@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import type { FileRelations } from '@shared/types/tags'
 import type { FileHistory, SnapshotMeta } from '@shared/types/history'
 import { AIChatSection, type AIChatSectionProps } from './AIChatSection'
@@ -10,6 +10,15 @@ export const SECTION_DOCUMENT_INFO = 'document-info'
 export const SECTION_RELATIONS = 'relations'
 export const SECTION_HISTORY = 'history'
 export const SECTION_AI_CHAT = 'ai-chat'
+
+// Default render order. User reorderings are merged on top of this,
+// with any unknown-to-the-user new sections appended at the end.
+const DEFAULT_SECTION_ORDER = [
+  SECTION_DOCUMENT_INFO,
+  SECTION_RELATIONS,
+  SECTION_HISTORY,
+  SECTION_AI_CHAT
+]
 
 interface DocumentStats {
   wordCount: number
@@ -31,6 +40,8 @@ interface RightSidebarProps {
   onToggleRelationExpanded?: (tag: string) => void
   sectionsExpanded?: Record<string, boolean>
   onSetSectionExpanded?: (sectionId: string, expanded: boolean) => void
+  sectionOrder?: string[]
+  onSetSectionOrder?: (order: string[]) => void
   history?: FileHistory | null
   canSnapshot?: boolean
   onCreateSnapshot?: () => void
@@ -51,6 +62,8 @@ export function RightSidebar({
   onToggleRelationExpanded,
   sectionsExpanded,
   onSetSectionExpanded,
+  sectionOrder,
+  onSetSectionOrder,
   history,
   canSnapshot,
   onCreateSnapshot,
@@ -58,16 +71,131 @@ export function RightSidebar({
   onDeleteSnapshot,
   chat
 }: RightSidebarProps) {
+  // Drag state lives in a ref so the drop handler always sees the
+  // current value regardless of React's render timing. We also stamp
+  // the dragged id into dataTransfer so the drop is self-describing.
+  const draggingIdRef = useRef<string | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null)
+
   if (!isVisible) return null
 
-  const infoExpanded =
-    sectionsExpanded?.[SECTION_DOCUMENT_INFO] ?? false // default collapsed
-  const relationsExpanded =
-    sectionsExpanded?.[SECTION_RELATIONS] ?? true // default expanded
-  const historyExpanded =
-    sectionsExpanded?.[SECTION_HISTORY] ?? false // default collapsed
-  const aiChatExpanded =
-    sectionsExpanded?.[SECTION_AI_CHAT] ?? false // default collapsed
+  const expandedDefaults: Record<string, boolean> = {
+    [SECTION_DOCUMENT_INFO]: false,
+    [SECTION_RELATIONS]: true,
+    [SECTION_HISTORY]: false,
+    [SECTION_AI_CHAT]: false
+  }
+
+  // Build the list of sections the sidebar currently knows how to
+  // render. AI Chat is conditional on `chat` being provided.
+  const availableIds = [
+    SECTION_DOCUMENT_INFO,
+    SECTION_RELATIONS,
+    SECTION_HISTORY,
+    ...(chat ? [SECTION_AI_CHAT] : [])
+  ]
+
+  // Merge user order with defaults: keep persisted order, drop
+  // unknown ids, append any new sections the user hasn't seen yet.
+  const userOrder = (sectionOrder ?? []).filter((id) =>
+    availableIds.includes(id)
+  )
+  const missing = availableIds.filter((id) => !userOrder.includes(id))
+  const orderedIds =
+    userOrder.length === 0
+      ? DEFAULT_SECTION_ORDER.filter((id) => availableIds.includes(id))
+      : [...userOrder, ...missing]
+
+  const renderSection = (id: string): ReactNode => {
+    const expanded = sectionsExpanded?.[id] ?? expandedDefaults[id] ?? false
+    const common = {
+      id,
+      expanded,
+      onToggle: onSetSectionExpanded,
+      dragging: draggingId === id,
+      isDropTarget: dropTargetId === id && draggingId !== id,
+      onDragStart: () => {
+        draggingIdRef.current = id
+        setDraggingId(id)
+      },
+      onDragEnd: () => {
+        draggingIdRef.current = null
+        setDraggingId(null)
+        setDropTargetId(null)
+      },
+      onDragEnter: () => {
+        const src = draggingIdRef.current
+        if (src && src !== id) setDropTargetId(id)
+      },
+      onDropHere: (draggedIdFromEvent?: string) => {
+        const src = draggedIdFromEvent || draggingIdRef.current
+        if (!src || src === id || !availableIds.includes(src)) return
+        const next = orderedIds.filter((s) => s !== src)
+        const targetIdx = next.indexOf(id)
+        if (targetIdx < 0) return
+        next.splice(targetIdx, 0, src)
+        onSetSectionOrder?.(next)
+        draggingIdRef.current = null
+        setDraggingId(null)
+        setDropTargetId(null)
+      }
+    }
+
+    switch (id) {
+      case SECTION_DOCUMENT_INFO:
+        return (
+          <CollapsibleSection key={id} title="Document Info" {...common}>
+            <DocumentInfoBody
+              stats={stats}
+              fileName={fileName ?? null}
+              lastModified={lastModified ?? null}
+            />
+          </CollapsibleSection>
+        )
+      case SECTION_RELATIONS:
+        return (
+          <CollapsibleSection key={id} title="Relations" {...common}>
+            <RelationsBody
+              relations={relations ?? null}
+              onOpenFile={onOpenFile}
+              expandedRelations={expandedRelations ?? []}
+              onToggleRelationExpanded={onToggleRelationExpanded}
+            />
+          </CollapsibleSection>
+        )
+      case SECTION_HISTORY:
+        return (
+          <CollapsibleSection key={id} title="History" {...common}>
+            <HistoryBody
+              history={history ?? null}
+              canSnapshot={canSnapshot ?? false}
+              onCreateSnapshot={onCreateSnapshot}
+              onRestoreSnapshot={onRestoreSnapshot}
+              onDeleteSnapshot={onDeleteSnapshot}
+            />
+          </CollapsibleSection>
+        )
+      case SECTION_AI_CHAT:
+        return chat ? (
+          <CollapsibleSection key={id} title="AI Chat" {...common}>
+            <AIChatSection {...chat} />
+          </CollapsibleSection>
+        ) : null
+      default:
+        return null
+    }
+  }
+
+  // Delegated handler: figures out which section the cursor is over
+  // by walking up the DOM. This catches drops that land on child
+  // elements (like a button or another section's grip span) which
+  // might not bubble the section-level drop handler reliably.
+  const resolveSectionIdFromEvent = (target: EventTarget | null): string | null => {
+    if (!(target instanceof HTMLElement)) return null
+    const node = target.closest('[data-section-id]')
+    return node?.getAttribute('data-section-id') ?? null
+  }
 
   return (
     <aside
@@ -80,59 +208,35 @@ export function RightSidebar({
       </div>
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-5">
-        <CollapsibleSection
-          id={SECTION_DOCUMENT_INFO}
-          title="Document Info"
-          expanded={infoExpanded}
-          onToggle={onSetSectionExpanded}
-        >
-          <DocumentInfoBody
-            stats={stats}
-            fileName={fileName ?? null}
-            lastModified={lastModified ?? null}
-          />
-        </CollapsibleSection>
-
-        <CollapsibleSection
-          id={SECTION_RELATIONS}
-          title="Relations"
-          expanded={relationsExpanded}
-          onToggle={onSetSectionExpanded}
-        >
-          <RelationsBody
-            relations={relations ?? null}
-            onOpenFile={onOpenFile}
-            expandedRelations={expandedRelations ?? []}
-            onToggleRelationExpanded={onToggleRelationExpanded}
-          />
-        </CollapsibleSection>
-
-        <CollapsibleSection
-          id={SECTION_HISTORY}
-          title="History"
-          expanded={historyExpanded}
-          onToggle={onSetSectionExpanded}
-        >
-          <HistoryBody
-            history={history ?? null}
-            canSnapshot={canSnapshot ?? false}
-            onCreateSnapshot={onCreateSnapshot}
-            onRestoreSnapshot={onRestoreSnapshot}
-            onDeleteSnapshot={onDeleteSnapshot}
-          />
-        </CollapsibleSection>
-
-        {chat && (
-          <CollapsibleSection
-            id={SECTION_AI_CHAT}
-            title="AI Chat"
-            expanded={aiChatExpanded}
-            onToggle={onSetSectionExpanded}
-          >
-            <AIChatSection {...chat} />
-          </CollapsibleSection>
-        )}
+      <div
+        className="flex-1 overflow-y-auto px-3 py-3 space-y-5"
+        onDragOver={(e) => {
+          // Only preventDefault when we have a live reorder drag going,
+          // otherwise we'd hijack unrelated drags (e.g. file drops on
+          // the editor further down the tree).
+          if (draggingIdRef.current) {
+            e.preventDefault()
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+          }
+        }}
+        onDrop={(e) => {
+          const draggedId =
+            e.dataTransfer?.getData('text/plain') || draggingIdRef.current
+          if (!draggedId) return
+          const targetId = resolveSectionIdFromEvent(e.target)
+          if (!targetId || targetId === draggedId) return
+          e.preventDefault()
+          const next = orderedIds.filter((s) => s !== draggedId)
+          const targetIdx = next.indexOf(targetId)
+          if (targetIdx < 0) return
+          next.splice(targetIdx, 0, draggedId)
+          onSetSectionOrder?.(next)
+          draggingIdRef.current = null
+          setDraggingId(null)
+          setDropTargetId(null)
+        }}
+      >
+        {orderedIds.map(renderSection)}
       </div>
     </aside>
   )
@@ -145,44 +249,106 @@ function CollapsibleSection({
   title,
   expanded,
   onToggle,
+  dragging,
+  isDropTarget,
+  onDragStart,
+  onDragEnd,
+  onDragEnter,
+  onDropHere,
   children
 }: {
   id: string
   title: string
   expanded: boolean
   onToggle?: (id: string, expanded: boolean) => void
+  dragging?: boolean
+  isDropTarget?: boolean
+  onDragStart?: () => void
+  onDragEnd?: () => void
+  onDragEnter?: () => void
+  onDropHere?: (draggedId?: string) => void
   children: ReactNode
 }) {
   return (
     <section
-      className="rounded-lg border border-border-subtle overflow-hidden"
+      data-section-id={id}
+      className={`rounded-lg border overflow-hidden transition-all ${
+        isDropTarget ? 'border-primary' : 'border-border-subtle'
+      } ${dragging ? 'opacity-40' : ''}`}
       style={{
-        background:
-          'color-mix(in srgb, var(--color-muted) 30%, transparent)'
+        background: isDropTarget
+          ? 'color-mix(in srgb, var(--color-primary) 12%, transparent)'
+          : 'color-mix(in srgb, var(--color-muted) 30%, transparent)'
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault()
+        onDragEnter?.()
+      }}
+      onDragOver={(e) => {
+        // Required to allow drop.
+        e.preventDefault()
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        const droppedId = e.dataTransfer?.getData('text/plain') || undefined
+        onDropHere?.(droppedId)
       }}
     >
-      <button
-        className="w-full flex items-center justify-between px-3 py-2 hover:bg-sidebar-hover transition-colors"
-        onClick={() => onToggle?.(id, !expanded)}
-        aria-expanded={expanded}
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-          {title}
-        </h2>
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className={`text-muted-foreground transition-transform ${
-            expanded ? 'rotate-90' : ''
-          }`}
+      <div className="w-full flex items-center gap-1 pr-3 hover:bg-sidebar-hover transition-colors">
+        <span
+          className="flex-shrink-0 pl-2 py-2 cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-muted-foreground"
+          draggable
+          onDragStart={(e) => {
+            if (e.dataTransfer) {
+              e.dataTransfer.effectAllowed = 'move'
+              // Some browsers require data to be set for drag to fire.
+              e.dataTransfer.setData('text/plain', id)
+            }
+            onDragStart?.()
+          }}
+          onDragEnd={() => onDragEnd?.()}
+          title="Drag to reorder"
+          aria-label="Drag to reorder section"
         >
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
+          <svg
+            width="10"
+            height="14"
+            viewBox="0 0 10 14"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <circle cx="2.5" cy="2" r="1.2" />
+            <circle cx="7.5" cy="2" r="1.2" />
+            <circle cx="2.5" cy="7" r="1.2" />
+            <circle cx="7.5" cy="7" r="1.2" />
+            <circle cx="2.5" cy="12" r="1.2" />
+            <circle cx="7.5" cy="12" r="1.2" />
+          </svg>
+        </span>
+        <button
+          className="flex-1 flex items-center justify-between py-2 pl-1"
+          onClick={() => onToggle?.(id, !expanded)}
+          aria-expanded={expanded}
+        >
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            {title}
+          </h2>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className={`text-muted-foreground transition-transform ${
+              expanded ? 'rotate-90' : ''
+            }`}
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
       {expanded && (
         <div className="px-3 pt-3 pb-3 border-t border-border-subtle">
           {children}

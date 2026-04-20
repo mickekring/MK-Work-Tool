@@ -118,6 +118,14 @@ function createMainStore(): StoreApi<MainStore> {
       settingsService.saveUIState(get().ui)
     },
 
+    // User-chosen order of right-sidebar sections
+    setSectionOrder: (order: string[]) => {
+      set((state) => ({
+        ui: { ...state.ui, sectionOrder: order }
+      }))
+      settingsService.saveUIState(get().ui)
+    },
+
     // Relations expansion — per (file, tag)
     toggleRelationExpanded: (filePath: string, tag: string) => {
       const current = get().ui.expandedRelations ?? {}

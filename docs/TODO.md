@@ -84,6 +84,7 @@ The issue appears to be timing-related between CodeMirror's DOM observation and 
 - [x] Local AI chat via Ollama — new AI Chat section in the right sidebar streams responses from a local Ollama model; system prompt injects the current document via `{{document}}`; model + prompt editable in Settings → AI; cancel / clear / error-handled
 - [x] Markdown rendering in chat bubbles via react-markdown + remark-gfm (bold, italic, lists, code, tables, etc.)
 - [x] Right sidebar font-size audit — replaced pixel literals (`text-[10px]`, `text-[11px]`) with rem-based Tailwind classes so the Settings → Appearance font-size scales the whole sidebar consistently. Primary content (chat messages, file lists, snapshot rows, "Save snapshot" button) bumped from `text-xs` to `text-sm` for readability.
+- [x] Reorderable right-sidebar sections — each section (Document Info, Relations, History, AI Chat) now has a drag handle in its header; drop onto another section to insert before it. Order persists globally in `ui-state.json` via a new `store:set-section-order` IPC channel. Implementation uses HTML5 DnD with a ref-backed drag source, `dataTransfer` payload, and a delegated drop handler on the scroll container so drops land reliably even when the cursor is over a nested element.
 
 ## Future Enhancements
 

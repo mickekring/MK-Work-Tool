@@ -28,9 +28,12 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
   ≥3 chars). The right sidebar's collapsible **Relations** section lists
   all connected notes, split into "Also tagged" and "Mentioned" groups.
   Click any entry to open it.
-- **Collapsible right-sidebar sections** — Document Info (stats),
-  Relations, and History each have a section heading with its own
-  chevron. Toggle state persists globally across files and restarts.
+- **Collapsible, reorderable right-sidebar sections** — Document
+  Info (stats), Relations, History, and AI Chat each have a section
+  heading with its own chevron. Grab the handle on the left of any
+  heading to drag a section into a new position; drop onto another
+  section to insert before it. Toggle state and section order both
+  persist globally across files and restarts.
 - **Tag Constellation** — press **⌘⇧G** (or click the constellation
   icon in the sidebar header) to see every tag in your vault as a
   force-directed graph. Circles sized by how many notes carry each

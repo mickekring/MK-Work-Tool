@@ -72,6 +72,7 @@ export function AppLayout({
     toggleRightSidebar,
     toggleRelationExpanded,
     setSectionExpanded,
+    setSectionOrder,
     setAIModel
   } = useStoreActions()
 
@@ -256,6 +257,8 @@ export function AppLayout({
           }}
           sectionsExpanded={ui.sectionsExpanded}
           onSetSectionExpanded={setSectionExpanded}
+          sectionOrder={ui.sectionOrder}
+          onSetSectionOrder={setSectionOrder}
           history={history}
           canSnapshot={!!selectedFile}
           onCreateSnapshot={onSnapshotCurrent}

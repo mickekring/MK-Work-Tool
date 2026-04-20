@@ -209,6 +209,10 @@ export interface StoreChannels {
     args: [sectionId: string, expanded: boolean]
     result: void
   }
+  'store:set-section-order': {
+    args: [order: string[]]
+    result: void
+  }
   'store:set-ai-model': {
     args: [model: string | null]
     result: void

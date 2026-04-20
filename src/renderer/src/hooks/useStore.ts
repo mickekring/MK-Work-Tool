@@ -27,7 +27,8 @@ const defaultState: StoreState = {
     lastOpenedFile: null,
     expandedFolders: [],
     expandedRelations: {},
-    sectionsExpanded: {}
+    sectionsExpanded: {},
+    sectionOrder: []
   },
   fileTree: [],
   isLoading: true
@@ -132,6 +133,10 @@ export function useStoreActions() {
     []
   )
 
+  const setSectionOrder = useCallback((order: string[]) => {
+    return window.api.invoke('store:set-section-order', order)
+  }, [])
+
   const setAIModel = useCallback((model: string | null) => {
     return window.api.invoke('store:set-ai-model', model)
   }, [])
@@ -151,6 +156,7 @@ export function useStoreActions() {
     toggleFolderExpanded,
     toggleRelationExpanded,
     setSectionExpanded,
+    setSectionOrder,
     setAIModel,
     setAISystemPrompt
   }
