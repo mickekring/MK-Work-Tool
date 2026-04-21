@@ -51,6 +51,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
 
   // Debounced auto-save. Reads the latest onSave from the ref so the
   // closure here can never go stale.
+  //
+  // 2.5s (was 1s) — longer debounce means fewer writes per minute,
+  // which is friendlier to cloud-sync daemons (pCloud, OneDrive, iCloud,
+  // Proton Drive): every write is a chance for the daemon to upload
+  // mid-change and create a "conflicted copy". We still save eagerly on
+  // blur / visibilitychange / beforeunload / Cmd+S / file-switch, so
+  // the worst-case data loss on crash is ≤2.5s of typing.
   const handleChange = useCallback(
     (newValue: string) => {
       onChange(newValue)
@@ -61,7 +68,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
 
       saveTimeoutRef.current = setTimeout(() => {
         onSaveRef.current?.()
-      }, 1000)
+      }, 2500)
     },
     [onChange]
   )
@@ -168,7 +175,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
 
   // Save eagerly when the window loses focus or the page is hidden.
   // Cheap insurance against data loss if the user Cmd+Tabs away or quits
-  // before the 1-second debounce fires.
+  // before the autosave debounce fires.
   useEffect(() => {
     const flush = () => {
       if (saveTimeoutRef.current) {

@@ -208,9 +208,22 @@ Accent color (10 presets) and font size (5 levels) are also stored in settings a
 The editor uses CodeMirror 6 with:
 - Markdown language support with syntax highlighting
 - Custom theme matching app CSS variables
-- Auto-save (1-second debounce after changes)
+- Auto-save (2.5-second debounce after changes) + eager flush on blur / visibilitychange / beforeunload / Cmd+S / file-switch
 - Manual save (Cmd+S)
 - Cursor position tracking (reported to StatusBar)
+- Interactive task-list checkboxes (`- [ ]` / `- [x]`), GFM table styling, and Cmd+B / Cmd+I markdown shortcuts
+
+## Cloud-sync friendliness
+
+Rune's storage is plain files in a user-chosen folder, so users put their vault inside pCloud / OneDrive / iCloud / Proton Drive / Dropbox / Syncthing and expect it to Just Work. Several small choices in the write path keep conflicts rare:
+
+- **Hash-guarded writes** (`src/main/services/safe-write.ts`, `safeWriteFile`): before writing a vault file we read its current contents and skip the write entirely if the bytes match. This kills the biggest cause of conflict copies — repeated "save" calls that don't actually change anything (autosave firing on no-op keystrokes, tag-propagation re-running, snapshot restore of identical content). Every skipped write is one fewer race window for the sync daemon.
+- **Direct overwrite, never rename-over-temp**: the classic "safe write" pattern (write to `foo.md.tmp`, rename over `foo.md`) breaks badly with iCloud (rewrites inodes) and pCloud (treats rename as delete+create, producing duplicate uploads). Rune opens the target file directly, writes, fsyncs, and closes.
+- **fsync before close**: once we release the file descriptor, FSEvents-driven sync daemons read the file immediately. fsync ensures stable bytes on disk before that happens; without it the daemon can briefly observe a partially-written file.
+- **Longer autosave debounce (2.5s)**: fewer writes per minute means fewer chances to race a sync upload. The editor still flushes eagerly on any focus-loss / navigation event, so worst-case data loss on crash is ≤2.5s of typing.
+- **Junk-file filtering** (`src/main/ipc/handlers.ts`, `JUNK_FILENAME_PATTERNS`): in addition to the existing `.`-prefix skip (which catches `.DS_Store`, iCloud `.Name.md.icloud` placeholders, Syncthing `.sync-conflict-*`, LibreOffice `.~lock.*#`), we also skip `~$*` (Office lock files) and `*.crdownload` / `*.part` / `*.tmp` / `*.temp` so transient sync artifacts don't clutter the file tree.
+
+Still to come (Layer 2+): external-change detection via `chokidar` with mtime/hash tracking so we reload clean files silently and warn on dirty ones; a first-class "Conflicts" section that groups detected `(conflicted copy)` / `.sync-conflict-*` siblings with compare/merge actions.
 
 ## Security
 

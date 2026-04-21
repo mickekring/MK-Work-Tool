@@ -20,6 +20,11 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
 - **Markdown shortcuts** — **⌘B** toggles bold, **⌘I** toggles italic
   around the selection (wraps, unwraps, or inserts an empty pair at the
   caret).
+- **Cloud-sync friendly** — put your vault inside pCloud, OneDrive,
+  iCloud, Proton Drive, Dropbox, or Syncthing. Rune skips no-op writes,
+  fsyncs before closing the file, never rename-over-temps, and uses a
+  2.5s autosave debounce — all to minimize the "conflicted copy"
+  duplicates that sync daemons produce when they race the editor.
 - **Drag-and-drop attachments** — drop any file onto a note; images
   render inline, other files become Cmd/Ctrl-click-openable links. All
   attachments are copied into a `vault_media/` folder inside your vault.

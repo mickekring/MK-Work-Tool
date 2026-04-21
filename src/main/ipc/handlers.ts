@@ -9,8 +9,28 @@ import { listModels, streamChat } from '../services/ollama-service'
 import type { ChatMessageSend } from '@shared/types/ai'
 import { migrateVaultAppDir } from '../services/settings-service'
 import { safeInsideVault, isSafeExternalUrl } from '../services/path-guard'
+import { safeWriteFile } from '../services/safe-write'
 
 export const MEDIA_FOLDER_NAME = 'vault_media'
+
+// Patterns for sync-service and editor junk files we never want to
+// surface in the file tree. Hidden-dotfile patterns (`.sync-conflict-*`,
+// `.~lock.*`, `*.icloud`, `.DS_Store`) are already caught by the
+// `startsWith('.')` check; these are the remaining non-dot forms.
+const JUNK_FILENAME_PATTERNS: RegExp[] = [
+  /^~\$/, // MS Office / LibreOffice lock files (~$doc.md, ~$file.docx)
+  /\.crdownload$/i, // Chrome partial download
+  /\.part$/i, // generic partial transfer
+  /\.tmp$/i, // generic temp
+  /\.temp$/i
+]
+
+function isJunkFilename(name: string): boolean {
+  for (const re of JUNK_FILENAME_PATTERNS) {
+    if (re.test(name)) return true
+  }
+  return false
+}
 
 // Helper to build file tree from a directory.
 // Non-markdown files are only shown inside vault_media (and its descendants),
@@ -27,8 +47,14 @@ function buildFileTree(
 
     for (const entry of entries) {
       // Skip hidden files and the .rune config folder (or any legacy
-      // .arbetsyta, since both begin with a dot).
+      // .arbetsyta, since both begin with a dot). Also catches iCloud
+      // placeholders (.Name.ext.icloud), Syncthing/Proton conflict
+      // markers (.sync-conflict-*), and LibreOffice lock files
+      // (.~lock.*#).
       if (entry.name.startsWith('.')) continue
+
+      // Skip sync-service / editor junk that isn't dot-prefixed.
+      if (isJunkFilename(entry.name)) continue
 
       const fullPath = join(dirPath, entry.name)
       const relativePath = parentPath ? join(parentPath, entry.name) : entry.name
@@ -184,7 +210,12 @@ export function registerIPCHandlers(): void {
     const safe = safeInsideVault(path)
     if (!safe) return false
     try {
-      writeFileSync(safe, content, 'utf-8')
+      // Hash-guarded: no-op when on-disk content already matches. This
+      // prevents spurious writes from creating sync-daemon race windows
+      // and keeps the tag index + auto-propagation from firing on every
+      // keystroke that didn't actually change the file.
+      const changed = safeWriteFile(safe, content)
+      if (!changed) return true
       tagsService.updateFile(safe, content)
       const propagated = tagsService.propagateTags(safe)
       if (propagated.length > 0) {
@@ -203,7 +234,7 @@ export function registerIPCHandlers(): void {
     const safe = safeInsideVault(path)
     if (!safe) return false
     try {
-      writeFileSync(safe, content, 'utf-8')
+      safeWriteFile(safe, content)
       tagsService.updateFile(safe, content)
       tagsService.propagateTags(safe)
       broadcastTagIndex()

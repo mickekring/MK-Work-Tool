@@ -2,8 +2,7 @@ import {
   readFileSync,
   readdirSync,
   statSync,
-  existsSync,
-  writeFileSync
+  existsSync
 } from 'fs'
 import { join } from 'path'
 import type {
@@ -16,6 +15,7 @@ import type {
 } from '@shared/types/tags'
 import type { SearchHit, SearchResults } from '@shared/types/search'
 import { historyService } from './history-service'
+import { safeWriteFile } from './safe-write'
 
 /**
  * Byte ranges of a markdown document where tag propagation must NOT
@@ -320,7 +320,7 @@ export const tagsService = {
           // propagation landed somewhere unexpected. createSnapshot
           // reads from disk, so it captures the pre-propagation state.
           historyService.createSnapshot(otherPath)
-          writeFileSync(otherPath, newContent, 'utf-8')
+          safeWriteFile(otherPath, newContent)
           removeFileFromIndex(otherPath)
           addFileToIndex(otherPath, newContent)
           modified.push(otherPath)

@@ -1,6 +1,5 @@
 import {
   readFileSync,
-  writeFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -13,6 +12,7 @@ import type { FileHistory, SnapshotMeta } from '@shared/types/history'
 import { HISTORY_MAX_SNAPSHOTS } from '@shared/types/history'
 
 import { APP_DIR_NAME } from './settings-service'
+import { safeWriteFile, safeWriteFileUnguarded } from './safe-write'
 
 const HISTORY_DIR_NAME = APP_DIR_NAME
 const HISTORY_SUBDIR = 'history'
@@ -96,7 +96,10 @@ export const historyService = {
 
       const id = makeSnapshotId()
       const snapshotPath = join(dir, `${id}.md`)
-      writeFileSync(snapshotPath, content, 'utf-8')
+      // Unguarded: snapshot filenames are unique (timestamped id) so the
+      // hash-guard would never skip; we still want fsync for durability
+      // before the snapshot becomes visible to the rest of the app.
+      safeWriteFileUnguarded(snapshotPath, content)
 
       // Prune oldest beyond the cap
       const all = listSnapshotFiles(dir)
@@ -167,7 +170,7 @@ export const historyService = {
 
     try {
       const content = readFileSync(snapshotPath, 'utf-8')
-      writeFileSync(filePath, content, 'utf-8')
+      safeWriteFile(filePath, content)
       return { content }
     } catch (error) {
       console.error(
