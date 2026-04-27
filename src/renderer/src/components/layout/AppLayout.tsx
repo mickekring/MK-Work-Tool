@@ -13,6 +13,7 @@ import { StatusBar } from './StatusBar'
 import { ResizeHandle } from './ResizeHandle'
 import { SettingsModal } from '../modals/SettingsModal'
 import { TagConstellation } from '../modals/TagConstellation'
+import { TagManagerModal } from '../modals/TagManagerModal'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -40,6 +41,12 @@ interface AppLayoutProps {
   onRestoreSnapshot?: (snapshotId: string) => void
   onDeleteSnapshot?: (snapshotId: string) => void
   documentContent?: string
+  /**
+   * Notified after the Tag Manager removes a tag, with the absolute
+   * paths of the files that were modified. Lets the parent reload the
+   * editor if the currently-open file was rewritten.
+   */
+  onTagRemovedExternally?: (filesModified: string[]) => void
 }
 
 export function AppLayout({
@@ -61,7 +68,8 @@ export function AppLayout({
   onSnapshotCurrent,
   onRestoreSnapshot,
   onDeleteSnapshot,
-  documentContent = ''
+  documentContent = '',
+  onTagRemovedExternally
 }: AppLayoutProps) {
   const { settings, ui, fileTree, isLoading } = useStore()
   const {
@@ -82,17 +90,22 @@ export function AppLayout({
   const openSettings = useCallback(() => setShowSettings(true), [])
   const [showConstellation, setShowConstellation] = useState(false)
   const openConstellation = useCallback(() => setShowConstellation(true), [])
+  const [showTagManager, setShowTagManager] = useState(false)
+  const openTagManager = useCallback(() => setShowTagManager(true), [])
 
-  // Global shortcut: ⌘⇧G / Ctrl+Shift+G opens the tag constellation.
+  // Global shortcuts:
+  //   ⌘⇧G / Ctrl+Shift+G — Tag Constellation
+  //   ⌘⇧T / Ctrl+Shift+T — Tag Manager
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.shiftKey &&
-        e.key.toLowerCase() === 'g'
-      ) {
+      if (!(e.metaKey || e.ctrlKey) || !e.shiftKey) return
+      const key = e.key.toLowerCase()
+      if (key === 'g') {
         e.preventDefault()
         setShowConstellation(true)
+      } else if (key === 't') {
+        e.preventDefault()
+        setShowTagManager(true)
       }
     }
     window.addEventListener('keydown', handler)
@@ -207,6 +220,7 @@ export function AppLayout({
           onToggleFolderExpanded={toggleFolderExpanded}
           onOpenSettings={openSettings}
           onOpenConstellation={openConstellation}
+          onOpenTagManager={openTagManager}
         />
 
         {/* Left resize handle */}
@@ -304,6 +318,12 @@ export function AppLayout({
         isOpen={showConstellation}
         onClose={() => setShowConstellation(false)}
         onOpenFile={(path) => onFileSelect?.(path)}
+      />
+
+      <TagManagerModal
+        isOpen={showTagManager}
+        onClose={() => setShowTagManager(false)}
+        onTagRemoved={onTagRemovedExternally}
       />
     </div>
   )

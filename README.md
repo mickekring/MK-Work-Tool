@@ -45,6 +45,12 @@ Built with Electron, React, TypeScript, and CodeMirror 6.
   heading to drag a section into a new position; drop onto another
   section to insert before it. Toggle state and section order both
   persist globally across files and restarts.
+- **Tag Manager** — press **⌘⇧T** (or click the tag icon in the
+  sidebar header) for a flat, filterable list of every tag in the
+  vault with note counts. Delete any tag and Rune strips just the
+  leading `#` from every occurrence across every note — the words
+  themselves stay put. Each modified note gets a History snapshot so
+  the change is reversible per file.
 - **Tag Constellation** — press **⌘⇧G** (or click the constellation
   icon in the sidebar header) to see every tag in your vault as a
   force-directed graph. Circles sized by how many notes carry each

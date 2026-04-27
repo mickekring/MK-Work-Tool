@@ -48,6 +48,7 @@ const ALLOWED_INVOKE_CHANNELS = new Set<string>([
   'tags:get-relations',
   'tags:rescan',
   'tags:get-graph',
+  'tags:remove-tag',
   // History
   'history:list',
   'history:create-snapshot',

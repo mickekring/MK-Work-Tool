@@ -460,6 +460,19 @@ export function registerIPCHandlers(): void {
     return tagsService.getSnapshot()
   })
 
+  ipcMain.handle('tags:remove-tag', async (_, tag: string) => {
+    const result = tagsService.removeTag(tag)
+    if (result.filesModified.length > 0) {
+      broadcastTagIndex()
+      // Each modified file got a new history snapshot — surface it so
+      // any open History panel refreshes.
+      for (const filePath of result.filesModified) {
+        broadcastHistoryChanged(filePath)
+      }
+    }
+    return result
+  })
+
   // Store handlers
   ipcMain.handle('store:get-state', async () => {
     const state = mainStore.getState()

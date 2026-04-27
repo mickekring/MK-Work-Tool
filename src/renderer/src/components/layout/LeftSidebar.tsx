@@ -24,6 +24,7 @@ interface LeftSidebarProps {
   onToggleFolderExpanded?: (folderId: string) => void
   onOpenSettings?: () => void
   onOpenConstellation?: () => void
+  onOpenTagManager?: () => void
 }
 
 interface ContextMenuState {
@@ -50,7 +51,8 @@ export function LeftSidebar({
   expandedFolders,
   onToggleFolderExpanded,
   onOpenSettings,
-  onOpenConstellation
+  onOpenConstellation,
+  onOpenTagManager
 }: LeftSidebarProps) {
   const [showFolderModal, setShowFolderModal] = useState(false)
   const [folderModalTarget, setFolderModalTarget] = useState<string | null>(null)
@@ -281,6 +283,29 @@ export function LeftSidebar({
                 <line x1="7" y1="7.5" x2="17" y2="8" />
                 <line x1="6" y1="9" x2="11" y2="16.5" />
                 <line x1="18" y1="10" x2="13" y2="16.5" />
+              </svg>
+            </button>
+            <button
+              className="p-1 rounded hover:bg-sidebar-hover text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+              onClick={onOpenTagManager}
+              title="Manage Tags (⌘⇧T)"
+              aria-label="Manage Tags"
+            >
+              {/* Hash / tag glyph */}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="4" y1="9" x2="20" y2="9" />
+                <line x1="4" y1="15" x2="20" y2="15" />
+                <line x1="10" y1="3" x2="8" y2="21" />
+                <line x1="16" y1="3" x2="14" y2="21" />
               </svg>
             </button>
             <button

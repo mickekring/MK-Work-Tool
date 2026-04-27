@@ -320,6 +320,27 @@ created: ${new Date().toISOString()}
     }
   }, [openVault, settings.vaultPath])
 
+  // The Tag Manager rewrites files on disk via the main process.
+  // If one of those rewrites hit the file currently open in the editor,
+  // re-read it so the user sees the new content (the `#` removed) instead
+  // of stale, dirty-on-next-save content.
+  const handleTagRemovedExternally = useCallback(
+    async (filesModified: string[]) => {
+      const path = currentFileRef.current
+      if (!path || !filesModified.includes(path)) return
+      try {
+        const fresh = await readFile(path)
+        contentRef.current = fresh
+        isDirtyRef.current = false
+        setContent(fresh)
+        setIsDirty(false)
+      } catch (error) {
+        console.error('Failed to reload file after tag removal:', error)
+      }
+    },
+    [readFile]
+  )
+
   // Handle title change (rename file)
   const handleTitleChange = useCallback(
     async (newTitle: string) => {
@@ -378,6 +399,7 @@ created: ${new Date().toISOString()}
         onRestoreSnapshot={handleRequestRestore}
         onDeleteSnapshot={handleDeleteSnapshot}
         documentContent={content}
+        onTagRemovedExternally={handleTagRemovedExternally}
       >
         {/* Main editor area content */}
         {currentFile ? (

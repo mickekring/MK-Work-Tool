@@ -334,6 +334,98 @@ export const tagsService = {
   },
 
   /**
+   * Remove the `#` prefix from every occurrence of a tag across the
+   * vault. The word itself stays — only the leading `#` is stripped —
+   * so `#Sweden` becomes `Sweden`. Tag occurrences inside protected
+   * ranges (frontmatter, fenced/inline code, link destinations,
+   * autolinks, bare URLs) are left untouched, mirroring the protection
+   * model used by `propagateTags`.
+   *
+   * Snapshots the file before each modification via `historyService`
+   * so the change is recoverable per-file from the History panel.
+   *
+   * Case-insensitive: passing `Sweden`, `sweden`, or `SWEDEN` all
+   * match `#Sweden`, `#sweden`, `#SWEDEN` everywhere.
+   *
+   * Returns the absolute paths of files that were actually modified
+   * and the total number of `#` characters removed.
+   */
+  removeTag(tag: string): { filesModified: string[]; occurrencesRemoved: number } {
+    const tagLower = tag.toLowerCase().replace(/^#/, '')
+    if (!tagLower) return { filesModified: [], occurrencesRemoved: 0 }
+
+    const filesSet = state.filesByTag.get(tagLower)
+    if (!filesSet || filesSet.size === 0) {
+      return { filesModified: [], occurrencesRemoved: 0 }
+    }
+
+    const filesModified: string[] = []
+    let occurrencesRemoved = 0
+
+    // Snapshot the iteration target: removeFileFromIndex / addFileToIndex
+    // mutate state.filesByTag during the loop.
+    const targets = Array.from(filesSet)
+
+    for (const filePath of targets) {
+      const content =
+        state.contentByFile.get(filePath) ??
+        (() => {
+          try {
+            return readFileSync(filePath, 'utf-8')
+          } catch {
+            return null
+          }
+        })()
+      if (content == null) continue
+
+      const protectedRanges = findProtectedRanges(content)
+      const hashPositions: number[] = []
+
+      // Reset lastIndex defensively — TAG_REGEX is a module-level
+      // singleton with the `g` flag, so prior matchAll usage could
+      // theoretically leak state if anyone ever called .exec().
+      TAG_REGEX.lastIndex = 0
+      for (const match of content.matchAll(TAG_REGEX)) {
+        if (match[1].toLowerCase() !== tagLower) continue
+        if (match.index === undefined) continue
+        if (isInsideProtected(match.index, protectedRanges)) continue
+        hashPositions.push(match.index)
+      }
+
+      if (hashPositions.length === 0) {
+        // All occurrences were protected — drop this file from the
+        // index for the tag (the file no longer "has" the deletable
+        // form of the tag) by leaving content as-is and skipping the
+        // write entirely.
+        continue
+      }
+
+      // Build new content: copy slices around each `#` byte.
+      let next = ''
+      let cursor = 0
+      for (const idx of hashPositions) {
+        next += content.slice(cursor, idx)
+        cursor = idx + 1 // skip the '#'
+      }
+      next += content.slice(cursor)
+
+      try {
+        historyService.createSnapshot(filePath)
+        const wrote = safeWriteFile(filePath, next)
+        if (!wrote) continue
+        removeFileFromIndex(filePath)
+        addFileToIndex(filePath, next)
+        filesModified.push(filePath)
+        occurrencesRemoved += hashPositions.length
+      } catch (error) {
+        console.error(`tags: failed to remove tag from ${filePath}`, error)
+      }
+    }
+
+    return { filesModified, occurrencesRemoved }
+  },
+
+  /**
    * Snapshot suitable for IPC — all known tags + files that declare each.
    */
   getSnapshot(): TagIndexSnapshot {

@@ -144,8 +144,20 @@ IPC channels:
 
 - `tags:get-index` — full snapshot of all tags + files that declare each
 - `tags:get-relations(filePath)` — per-file: tags declared + `taggedIn` (strong) + `mentionedIn` (weak) related files
+- `tags:get-graph` — co-occurrence graph used by the Tag Constellation
 - `tags:rescan` — force full vault rescan
+- `tags:remove-tag(tag)` — strip the leading `#` from every occurrence of a tag across the vault, returning `{ filesModified, occurrencesRemoved }`. See **Tag operations** below.
 - Event: `tags:index-changed` broadcast whenever the index mutates
+
+### Tag operations
+
+The **Tag Manager** modal (`src/renderer/src/components/modals/TagManagerModal.tsx`, opened via ⌘⇧T or the tag icon in the left sidebar header) lists every tag in the vault with note counts and exposes a single bulk operation today: **delete tag**.
+
+Deleting a tag does not delete any words. `tagsService.removeTag(tag)` finds every `TAG_REGEX` match across `state.contentByFile` whose lowercased name matches the target, filters out matches that fall inside `findProtectedRanges` (frontmatter, fenced/inline code, link destinations, autolinks, bare URLs), and rewrites each affected file with just the leading `#` byte stripped. So `Visited #Sweden` becomes `Visited Sweden`; the word `Sweden` inside a code block or a URL fragment is left exactly as it was.
+
+Each modified file gets a `historyService.createSnapshot` *before* the rewrite, so the Tag Manager's destructive action is reversible per-file from the History panel. Writes go through `safeWriteFile` for the usual cloud-sync friendliness (hash guard + fsync + direct overwrite).
+
+If the file currently open in the editor is one of the rewritten files, `App.tsx` re-reads it via `file:read` and replaces the in-memory content so the user sees the change immediately rather than dirty stale content.
 
 ## AI chat (Ollama)
 

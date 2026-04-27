@@ -133,6 +133,10 @@ export interface TagChannels {
     args: []
     result: TagGraph
   }
+  'tags:remove-tag': {
+    args: [tag: string]
+    result: { filesModified: string[]; occurrencesRemoved: number }
+  }
 }
 
 // Folder operation channels
